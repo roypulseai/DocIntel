@@ -689,7 +689,6 @@ with col_hint:
     if not analyze_clicked:
         st.caption(f"{len(documents)} document(s) loaded and ready. Click **Analyze Document** to run the full analysis.")
 
-@st.cache_data(show_spinner=False, hash_funcs={int: id})
 def run_pipeline(text: str) -> dict:
     from docintel.graph import run_docintel
     return run_docintel(text=text, question="")
@@ -736,7 +735,7 @@ if analyze_clicked:
                 source_name=doc["name"],
                 source_kind=doc["kind"],
                 result=result,
-                vector_store_data=cross_doc_vs.to_db() if _di == len(documents) - 1 else None,
+                vector_store_data=cross_doc_vs.substore(doc["name"]).to_db(),
             )
 
             results_by_doc[doc["name"]] = result

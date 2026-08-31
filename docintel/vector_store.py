@@ -142,6 +142,24 @@ class VectorStore:
     # Merging (for cross-store queries)
     # ------------------------------------------------------------------
 
+    def substore(self, source_name: str) -> VectorStore:
+        """Return a new store containing only chunks from *source_name*.
+
+        Reuses the already-computed vectors (no re-embedding).
+        """
+        sel = [i for i, s in enumerate(self._sources) if s == source_name]
+        sub = VectorStore()
+        sub._chunks = [self._chunks[i] for i in sel]
+        sub._sources = [self._sources[i] for i in sel]
+        sub._chunk_ids = [self._chunk_ids[i] for i in sel]
+        if sel:
+            rows = np.stack([self._vectors[i] for i in sel])
+            sub._vectors = rows
+            import faiss
+            sub._index = faiss.IndexFlatIP(rows.shape[1])
+            sub._index.add(rows)
+        return sub
+
     @staticmethod
     def merge(stores: list[VectorStore]) -> VectorStore:
         """Merge several built stores into one queryable store."""

@@ -65,9 +65,13 @@ def _build_index(state: DocIntelState) -> dict:
 
 
 def _qa(state: DocIntelState) -> dict:
+    question = state.get("question", "").strip()
+    if not question:
+        # No question asked (e.g. initial analysis) — skip the LLM call.
+        return {"answer": {"text": "", "sources": []}}
     hits = state.get("hits", [])
     chunk_texts = [h.text if hasattr(h, "text") else h["text"] for h in hits]
-    answer = generate_answer(state["text"], state.get("question", ""), chunk_texts)
+    answer = generate_answer(state["text"], question, chunk_texts)
     return {"answer": answer}
 
 

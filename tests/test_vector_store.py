@@ -43,4 +43,12 @@ h3 = merged.search("encryption", top_k=1)
 assert h3 and h3[0].source == "policy.txt"
 print(f"[OK] Merged index works ({len(merged)} chunks)")
 
+# Sub-store (per-document vectors for history)
+sub = vs.substore("complaint.txt")
+assert len(sub) == len(vs.substore("complaint.txt")._chunks) and sub._sources == ["complaint.txt"]
+assert sub.search("refund")[0].source == "complaint.txt"
+roundtrip = VectorStore.from_db(sub.to_db())
+assert roundtrip.search("refund") and roundtrip.search("refund")[0].source == "complaint.txt"
+print(f"[OK] Sub-store per-document vectors work ({len(sub)} chunk)")
+
 print("\nAll VectorStore tests passed.")

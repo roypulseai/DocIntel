@@ -78,8 +78,28 @@ def test_full_graph_orchestration(mock_llm_cls):
     print(f"       Final state keys: {list(result.keys())}")
 
 
+@patch("docintel.analysis.ChatGroq")
+def test_empty_question_skips_qa(mock_llm_cls):
+    classify_resp = _fake_message({"category": "News", "confidence": 0.8, "rationale": "ok"})
+    sentiment_resp = _fake_message({"sentiment": "neutral", "sentiment_score": 0.0, "topics": []})
+    summary_resp = _fake_message({"summary": "A short summary.", "key_insights": ["i1"]})
+
+    mock_instance = MagicMock()
+    # Only 3 LLM calls expected (classify, sentiment, summarize) — QA is skipped.
+    mock_instance.invoke.side_effect = [classify_resp, sentiment_resp, summary_resp]
+    mock_llm_cls.return_value = mock_instance
+
+    os.environ.setdefault("GROQ_API_KEY", "test-key-for-mocking")
+    result = run_docintel(text=SAMPLE, question="")
+
+    assert result["answer"] == {"text": "", "sources": []}, "Empty question should short-circuit QA"
+    assert mock_instance.invoke.call_count == 3, f"Expected 3 LLM calls, got {mock_instance.invoke.call_count}"
+    print("[PASS] Empty question skips the QA LLM call (3 calls total)")
+
+
 if __name__ == "__main__":
     test_ner_runs_for_real()
     test_chunking_and_retrieval_run_for_real()
     test_full_graph_orchestration()
+    test_empty_question_skips_qa()
     print("\nAll DocIntel tests passed.")

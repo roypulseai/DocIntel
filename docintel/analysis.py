@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
@@ -18,6 +19,30 @@ def _get_llm(temperature: float = 0.0) -> ChatGroq:
     api_key = os.environ.get("GROQ_API_KEY", "")
     model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
     return ChatGroq(model=model, api_key=api_key, temperature=temperature)
+
+
+def _llm_invoke(llm, prompt: str, attempts: int = 4) -> object:
+    """Invoke *llm* with retries on rate limits / transient errors.
+
+    Uses exponential backoff for 429 and 5xx-style errors, re-raising other
+    errors immediately. Returns the model response (with ``.content``).
+    """
+    import groq
+
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return llm.invoke([HumanMessage(content=prompt)])
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            is_rate = isinstance(exc, groq.RateLimitError) or "rate" in str(exc).lower()
+            is_transient = isinstance(
+                exc, (groq.APITimeoutError, groq.APIConnectionError, groq.InternalServerError)
+            )
+            if not (is_rate or is_transient) or attempt == attempts:
+                raise exc
+            time.sleep(min(2 ** attempt, 30))
+    raise last_exc  # pragma: no cover
 
 
 def _parse_json(text: str) -> dict:
@@ -47,7 +72,7 @@ def _parse_json(text: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def classify_document(text: str) -> dict:
-    """Zero-shot document classification via Groq (Llama 3)."""
+    """Zero-shot document classification via Groq (GPT-OSS)."""
     llm = _get_llm()
     prompt = (
         "You are a document classifier. Classify the following document "
@@ -56,7 +81,7 @@ def classify_document(text: str) -> dict:
         '{"category": "<string>", "confidence": <float 0-1>, "rationale": "<string>"}\n\n'
         f"Document:\n{text[:3000]}"
     )
-    resp = llm.invoke([HumanMessage(content=prompt)])
+    resp = _llm_invoke(llm, prompt)
     return _parse_json(resp.content)
 
 
@@ -65,7 +90,7 @@ def classify_document(text: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def sentiment_and_topics(text: str) -> dict:
-    """Sentiment polarity + topic extraction via Groq (Llama 3)."""
+    """Sentiment polarity + topic extraction via Groq (GPT-OSS)."""
     llm = _get_llm()
     prompt = (
         "Analyze the sentiment and extract key topics from the following document.\n\n"
@@ -75,7 +100,7 @@ def sentiment_and_topics(text: str) -> dict:
         '"topics": ["<topic1>", "<topic2>", ...]}\n\n'
         f"Document:\n{text[:3000]}"
     )
-    resp = llm.invoke([HumanMessage(content=prompt)])
+    resp = _llm_invoke(llm, prompt)
     return _parse_json(resp.content)
 
 
@@ -96,7 +121,7 @@ def generate_answer(text: str, question: str, chunks: list[str]) -> dict:
         '{"text": "<your answer with [chunk N] citations>", '
         '"sources": [<list of chunk indices used>]}\n'
     )
-    resp = llm.invoke([HumanMessage(content=prompt)])
+    resp = _llm_invoke(llm, prompt)
     return _parse_json(resp.content)
 
 
@@ -115,5 +140,5 @@ def summarize_document(text: str) -> dict:
         '"key_insights": ["<insight 1>", "<insight 2>", ...]}\n\n'
         f"Document:\n{text[:6000]}"
     )
-    resp = llm.invoke([HumanMessage(content=prompt)])
+    resp = _llm_invoke(llm, prompt)
     return _parse_json(resp.content)
