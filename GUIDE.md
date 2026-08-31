@@ -59,7 +59,7 @@ All DocIntel tests passed.
 
 ## Getting a Free API Key
 
-DocIntel uses **Groq** for LLM inference. Groq provides free access to Llama 3 models with no credit card required.
+DocIntel uses **Groq** for LLM inference. Groq provides free access to GPT-OSS and Qwen models with no credit card required.
 
 ### Step-by-Step
 
@@ -121,6 +121,7 @@ In the **left sidebar**:
 
 1. Click **"How to get your free API key"** to expand the guide
 2. Paste your `gsk_...` key into the input field
+   - If you already saved your key in the `start.bat` / launcher prompt, it is **already filled in** for you — just confirm it's there
 3. Optionally select a model from the dropdown:
    - `openai/gpt-oss-120b` — Best quality (recommended)
    - `openai/gpt-oss-20b` — Fastest responses

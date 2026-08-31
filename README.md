@@ -29,7 +29,7 @@
 
 **DocIntel** is a free, open-source document intelligence pipeline that processes any text document through a multi-step agentic workflow. It combines LLM-powered analysis with classical NLP techniques to deliver classification, named entity recognition, sentiment analysis, topic extraction, and retrieval-augmented question answering.
 
-Built with **LangGraph** for orchestration, **Groq** (free tier with Llama 3) for LLM inference, **spaCy** for real NER, and **scikit-learn** for TF-IDF retrieval — everything runs without paid APIs.
+Built with **LangGraph** for orchestration, **Groq** (free tier with GPT-OSS) for LLM inference, **spaCy** for real NER, and **scikit-learn** for TF-IDF retrieval — everything runs without paid APIs.
 
 ### Why DocIntel?
 
@@ -47,7 +47,7 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with Llama 3) fo
 
 | Feature | How It Works | Cost |
 |---------|-------------|------|
-| **Document Classification** | Zero-shot classification via Llama 3.3 70B | Free (Groq) |
+| **Document Classification** | Zero-shot classification via GPT-OSS 120B | Free (Groq) |
 | **Named Entity Recognition** | spaCy `en_core_web_sm` — persons, orgs, dates, money, locations | Free (local) |
 | **Sentiment Analysis** | LLM-powered polarity scoring (-1.0 to +1.0) | Free (Groq) |
 | **Topic Extraction** | Automatic key topic identification | Free (Groq) |
@@ -68,11 +68,11 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with Llama 3) fo
 │                                                                 │
 │  ┌──────────┐   ┌────────────┐   ┌──────────┐   ┌───────────┐ │
 │  │  Ingest   │──▶│  Classify  │──▶│   NER    │──▶│ Sentiment │ │
-│  │          │   │ (Llama 3)  │   │ (spaCy)  │   │ (Llama 3) │ │
+│  │          │   │ (GPT-OSS)  │   │ (spaCy)  │   │ (GPT-OSS) │ │
 │  └──────────┘   └────────────┘   └──────────┘   └─────┬─────┘ │
 │                                                        │       │
 │  ┌──────────┐   ┌────────────────────────────────────┐ │       │
-│  │    END   │◀──│         QA (Llama 3)               │◀┘       │
+│  │    END   │◀──│         QA (GPT-OSS)               │◀┘       │
 │  └──────────┘   │  ← TF-IDF retrieval + cited answer │         │
 │                 └─────────────────────────────────────┘         │
 │                         ▲                                       │
@@ -88,11 +88,11 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with Llama 3) fo
 | Node | Module | Technology | What It Does |
 |------|--------|-----------|--------------|
 | `ingest` | `graph.py` | — | Accepts raw text input |
-| `classify` | `analysis.py` | Llama 3 via Groq | Zero-shot document classification with confidence score |
+| `classify` | `analysis.py` | GPT-OSS via Groq | Zero-shot document classification with confidence score |
 | `extract_entities` | `ner.py` | spaCy `en_core_web_sm` | Extracts named entities (PERSON, ORG, DATE, MONEY, GPE, etc.) |
-| `sentiment_topic` | `analysis.py` | Llama 3 via Groq | Sentiment polarity + key topic extraction |
+| `sentiment_topic` | `analysis.py` | GPT-OSS via Groq | Sentiment polarity + key topic extraction |
 | `build_index` | `retriever.py` | scikit-learn TF-IDF | Sentence-aware chunking + vector index |
-| `qa` | `analysis.py` | Llama 3 via Groq | Answer questions grounded in retrieved chunks with source citations |
+| `qa` | `analysis.py` | GPT-OSS via Groq | Answer questions grounded in retrieved chunks with source citations |
 
 ---
 
@@ -320,7 +320,7 @@ DocIntel/
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| **LLM** | [Llama 3.3 70B](https://llama.meta.com) via [Groq](https://groq.com) | Classification, sentiment, QA — free tier |
+| **LLM** | [GPT-OSS 120B](https://github.com/openai/gpt-oss) via [Groq](https://groq.com) | Classification, sentiment, QA — free tier |
 | **Orchestration** | [LangGraph](https://github.com/langchain-ai/langgraph) | Agentic workflow with typed state |
 | **NER** | [spaCy](https://spacy.io) `en_core_web_sm` | Real named entity recognition (not LLM-simulated) |
 | **Retrieval** | [scikit-learn](https://scikit-learn.org) TF-IDF | Classical information retrieval with cosine similarity |
@@ -472,5 +472,5 @@ GitHub: [@roypulseai](https://github.com/roypulseai)
 
 <p align="center">
   Built with ❤️ using open-source technologies<br>
-  <sub>Llama 3 • LangGraph • spaCy • Streamlit • Groq</sub>
+  <sub>GPT-OSS • LangGraph • spaCy • Streamlit • Groq</sub>
 </p>
