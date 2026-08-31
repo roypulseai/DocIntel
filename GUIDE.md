@@ -22,7 +22,7 @@ A complete guide to using DocIntel for document intelligence — from installati
 
 ### Prerequisites
 
-- **Python 3.11** or higher
+- **Python 3.11** (recommended; 3.12 also supported)
 - **pip** (Python package manager)
 - A **free Groq API key** ([get one here](https://console.groq.com))
 
@@ -434,36 +434,38 @@ spaCy uses standard NER labels:
 
 ## Docker Deployment
 
-### Build and Run
+The repo ships with `docker-compose.yml` and `.dockerignore` already in place, so
+Docker is truly one command.
+
+### Docker Compose (recommended)
+
+```bash
+# 1. Create a local .env file with your key (git-ignored, never committed):
+#    GROQ_API_KEY=gsk_your_key_here
+# 2. Build and run in one command:
+docker compose up
+```
+
+Compose reads `GROQ_API_KEY` from your local `.env`, serves the app on
+`http://localhost:8501`, and keeps your analysis history in a named Docker
+volume (`docintel_history`) so it survives container restarts and rebuilds.
+
+To stop the container: `docker compose down`.
+To reset the history volume: `docker compose down -v`.
+
+### Manual build and run
 
 ```bash
 # Build the image
 docker build -t docintel .
 
-# Run with your API key
+# Run with your API key (no history persistence)
 docker run -p 8501:8501 -e GROQ_API_KEY=gsk_your_key_here docintel
 ```
 
-### Docker Compose
-
-Create a `docker-compose.yml`:
-
-```yaml
-version: "3.8"
-services:
-  docintel:
-    build: .
-    ports:
-      - "8501:8501"
-    environment:
-      - GROQ_API_KEY=${GROQ_API_KEY}
-```
-
-Then run:
-
-```bash
-docker compose up
-```
+> Note: the Docker image uses **Python 3.11** and already bundles the spaCy
+> name-detection model, so no first-run model download is needed inside the
+> container.
 
 ---
 
