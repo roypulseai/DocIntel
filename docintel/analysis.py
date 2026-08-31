@@ -1,12 +1,13 @@
 """LLM-backed analysis nodes — classification, sentiment, QA.
 
-Uses LangChain-Groq (Llama 3 via Groq free tier) instead of Anthropic Claude.
+Uses LangChain-Groq (openai/gpt-oss or qwen via Groq free tier).
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
@@ -20,19 +21,25 @@ def _get_llm(temperature: float = 0.0) -> ChatGroq:
 
 
 def _parse_json(text: str) -> dict:
-    """Best-effort extraction of a JSON object from LLM output."""
+    """Best-effort extraction of a JSON object from LLM output.
+
+    Returns an empty dict if the output can't be parsed as JSON, so
+    downstream code never crashes on a malformed model response.
+    """
     text = text.strip()
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
     start = text.find("{")
     end = text.rfind("}") + 1
-    if start != -1 and end > start:
-        return json.loads(text[start:end])
-    return json.loads(text)
-
-
-import re
+    try:
+        if start != -1 and end > start:
+            parsed = json.loads(text[start:end])
+        else:
+            parsed = json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 # ---------------------------------------------------------------------------

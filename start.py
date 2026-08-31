@@ -40,7 +40,7 @@ def ensure_python() -> bool:
 
 def ensure_deps() -> bool:
     mods = ["streamlit", "langchain_groq", "langgraph", "spacy", "sklearn",
-            "sentence_transformers", "faiss"]
+            "sentence_transformers", "faiss", "pypdf", "docx"]
     if all(_run([_python(), "-c", f"import {m}"]) for m in mods):
         print("[OK] Dependencies already installed.")
         return True

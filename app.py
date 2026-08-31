@@ -312,19 +312,31 @@ with st.sidebar:
     documents = []
 
     if upload_method == "Upload a file":
-        st.markdown("Supports `.txt`, `.md`, `.csv` files — you can select **multiple** files")
+        st.markdown("Supports `.txt`, `.md`, `.csv`, `.pdf`, `.docx`, `.doc` files — you can select **multiple** files")
         uploaded = st.file_uploader(
             "Choose one or more documents",
-            type=["txt", "md", "csv"],
+            type=["txt", "md", "csv", "pdf", "docx", "doc"],
             accept_multiple_files=True,
             label_visibility="collapsed",
         )
         if uploaded:
+            from docintel.file_reader import extract_text
+            errors = []
             for u in uploaded:
-                txt = u.read().decode("utf-8", errors="replace")
+                try:
+                    txt = extract_text(u.name, u.getvalue())
+                except Exception as exc:
+                    errors.append(f"{u.name}: {exc}")
+                    continue
+                if not txt.strip():
+                    errors.append(f"{u.name}: no text could be extracted")
+                    continue
                 documents.append({"name": u.name, "kind": "file", "text": txt})
-            st.success(f"Loaded {len(documents)} file(s) — "
-                       + ", ".join(f"{d['name']} ({len(d['text'])} chars)" for d in documents))
+            if documents:
+                st.success(f"Loaded {len(documents)} file(s) — "
+                           + ", ".join(f"{d['name']} ({len(d['text'])} chars)" for d in documents))
+            if errors:
+                st.warning("Some files could not be read:\n" + "\n".join(f"• {e}" for e in errors))
 
     elif upload_method == "Paste text":
         pasted = st.text_area(
@@ -442,7 +454,7 @@ st.markdown("""
 
 # ── Shared rendering helper (used by both history + live analysis) ──────────
 
-def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = None) -> None:
+def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = None, form_key: str = "doc") -> None:
     """Render full analysis results for a single document."""
     from docintel.analysis import generate_answer
 
@@ -551,7 +563,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = 
         st.subheader("Ask Questions About This Document")
         st.caption("Type any question — the AI will search relevant parts of the document and give a grounded answer with sources.")
 
-        with st.form(f"qa_form_{abs(hash(doc_text[:200]))}"):
+        with st.form(f"qa_form_{form_key}"):
             question = st.text_input(
                 "Your question",
                 placeholder="e.g. What is the transaction reference number?",
@@ -623,7 +635,7 @@ if view == "🕘 History":
         with st.expander(f"Open “{item['source_name']}”"):
             saved = _history.get_analysis(item["id"])
             _hist_vs = VectorStore.from_db(saved["vector_store_data"]) if saved.get("vector_store_data") else None
-            _render_doc_results(saved["result"], saved["result"].get("text", ""), _hist_vs)
+            _render_doc_results(saved["result"], saved["result"].get("text", ""), _hist_vs, form_key=f"hist_{item['id']}")
     st.stop()
 
 # ── Empty state ──────────────────────────────────────────────────────────────
@@ -677,72 +689,88 @@ with col_hint:
     if not analyze_clicked:
         st.caption(f"{len(documents)} document(s) loaded and ready. Click **Analyze Document** to run the full analysis.")
 
-if not analyze_clicked:
-    st.stop()
-
-
 @st.cache_data(show_spinner=False, hash_funcs={int: id})
 def run_pipeline(text: str) -> dict:
     from docintel.graph import run_docintel
     return run_docintel(text=text, question="")
 
 
-# Progress display + cross-document VectorStore build
-progress_placeholder = st.empty()
+# ── Run the pipeline only when "Analyze Document" is clicked ────────────────
+if analyze_clicked:
+    progress_placeholder = st.empty()
+    results_by_doc: dict[str, dict] = {}
+    _doc_by_name = {d["name"]: d for d in documents}
+    cross_doc_vs = VectorStore()
 
-results_by_doc = {}
-cross_doc_vs = VectorStore()
+    with progress_placeholder.container():
+        for _di, doc in enumerate(documents):
+            st.markdown(f"#### ⚡ Analyzing **{doc['name']}** ({_di + 1}/{len(documents)})...")
+            steps = [
+                "Classifying document",
+                "Extracting entities (NER)",
+                "Analyzing sentiment & topics",
+                "Building search index",
+                "Summarizing key insights",
+                "Embedding for semantic search",
+            ]
+            step_containers = []
+            for i, step in enumerate(steps):
+                c = st.empty()
+                step_containers.append(c)
+                c.markdown(f'<div class="step-box step-running">⏳ {step}...</div>', unsafe_allow_html=True)
 
-with progress_placeholder.container():
-    for _di, doc in enumerate(documents):
-        st.markdown(f"#### ⚡ Analyzing **{doc['name']}** ({_di + 1}/{len(documents)})...")
-        steps = [
-            "Classifying document",
-            "Extracting entities (NER)",
-            "Analyzing sentiment & topics",
-            "Building search index",
-            "Summarizing key insights",
-            "Embedding for semantic search",
-        ]
-        step_containers = []
-        for i, step in enumerate(steps):
-            c = st.empty()
-            step_containers.append(c)
-            c.markdown(f'<div class="step-box step-running">⏳ {step}...</div>', unsafe_allow_html=True)
+            try:
+                result = run_pipeline(doc["text"])
+            except Exception as exc:
+                st.error(
+                    f"⚠️ Could not analyze **{doc['name']}**: {exc}\n\n"
+                    "This is usually a problem with your Groq API key, rate limits, "
+                    "or the network. Check the key in the sidebar and try again."
+                )
+                continue
 
-        result = run_pipeline(doc["text"])
+            cross_doc_vs.add_document(doc["text"], doc["name"])
+            cross_doc_vs.build_index()
 
-        cross_doc_vs.add_document(doc["text"], doc["name"])
-        cross_doc_vs.build_index()
+            _history.save_analysis(
+                source_name=doc["name"],
+                source_kind=doc["kind"],
+                result=result,
+                vector_store_data=cross_doc_vs.to_db() if _di == len(documents) - 1 else None,
+            )
 
-        _history.save_analysis(
-            source_name=doc["name"],
-            source_kind=doc["kind"],
-            result=result,
-            vector_store_data=cross_doc_vs.to_db() if _di == len(documents) - 1 else None,
-        )
+            results_by_doc[doc["name"]] = result
 
-        results_by_doc[doc["name"]] = result
+            for i, step in enumerate(steps):
+                step_containers[i].markdown(f'<div class="step-box step-done">✨ {step}</div>', unsafe_allow_html=True)
 
-        for i, step in enumerate(steps):
-            step_containers[i].markdown(f'<div class="step-box step-done">✨ {step}</div>', unsafe_allow_html=True)
+        if len(documents) > 0:
+            st.markdown(f'<div class="step-box step-done">💾 Saved to history</div>', unsafe_allow_html=True)
 
-    if len(documents) > 0:
-        st.markdown(f'<div class="step-box step-done">💾 Saved to history</div>', unsafe_allow_html=True)
+    progress_placeholder.empty()
 
-progress_placeholder.empty()
+    # Persist results so they survive the re-run triggered by "Ask"/search.
+    st.session_state["docintel_results"] = results_by_doc
+    st.session_state["docintel_docs"] = _doc_by_name
+    st.session_state["docintel_cross_vs"] = cross_doc_vs
 
+# ── Render persisted results (kept alive across re-runs) ─────────────────────
+if "docintel_results" not in st.session_state:
+    st.stop()
 
-_doc_by_name = {d["name"]: d for d in documents}
+results_by_doc = st.session_state["docintel_results"]
+_doc_by_name = st.session_state["docintel_docs"]
+cross_doc_vs = st.session_state["docintel_cross_vs"]
+
 if len(results_by_doc) == 1:
     _name = next(iter(results_by_doc))
     st.markdown(f"### 📄 {_name}")
-    _render_doc_results(results_by_doc[_name], _doc_by_name[_name]["text"], cross_doc_vs)
+    _render_doc_results(results_by_doc[_name], _doc_by_name[_name]["text"], cross_doc_vs, form_key=f"live_{_name}")
 else:
     _doc_tabs = st.tabs([f"📄 {name}" for name in results_by_doc])
     for _tab, _name in zip(_doc_tabs, results_by_doc):
         with _tab:
-            _render_doc_results(results_by_doc[_name], _doc_by_name[_name]["text"], cross_doc_vs)
+            _render_doc_results(results_by_doc[_name], _doc_by_name[_name]["text"], cross_doc_vs, form_key=f"live_{_name}")
 
 
 # ── Cross-Document Semantic Search ──────────────────────────────────────────

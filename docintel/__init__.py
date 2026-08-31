@@ -5,6 +5,7 @@ from docintel.ner import extract_entities
 from docintel.retriever import TfidfRetriever, chunk_text
 from docintel.vector_store import VectorStore
 from docintel.storage import HistoryDB
+from docintel.file_reader import extract_text
 
 __all__ = [
     "run_docintel",
@@ -13,4 +14,5 @@ __all__ = [
     "chunk_text",
     "VectorStore",
     "HistoryDB",
+    "extract_text",
 ]
