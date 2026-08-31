@@ -139,7 +139,7 @@ echo.
 echo     Your web browser will open automatically to the app.
 echo     If it does NOT open, type this into any browser:
 echo.
-echo           >>>  http://localhost:8501  <<<
+echo           ^>^>^>  http://localhost:8501  ^<^<^<
 echo.
 echo     You will now see the app's log messages here.
 echo     To stop the app: just close this window.
@@ -148,9 +148,9 @@ echo.
 cd /d "%~dp0"
 
 :: Give the server a few seconds to start, then open the browser
-:: automatically (in a separate helper process), while streamlit runs
-:: in the foreground of this same window.
-start "" cmd /c "timeout /t 5 /nobreak >nul & start "" http://localhost:8501"
+:: automatically. We use a tiny PowerShell helper to avoid the fragile
+:: cmd quoting that caused a "> unexpected" error and aborted the launch.
+start "" powershell -NoProfile -Command "Start-Sleep -Seconds 6; Start-Process 'http://localhost:8501'"
 
 "%PYTHON%" -m streamlit run app.py --server.port 8501
 
