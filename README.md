@@ -98,6 +98,24 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with Llama 3) fo
 
 ## Quick Start
 
+### No technical skills needed → Double-click to run
+
+DocIntel ships with **one-click launchers** that automatically install Python
+dependencies, download the spaCy model, prompt for your free API key, start the
+app, and open your browser — no commands required.
+
+| Your OS | Start | Stop |
+|---------|-------|------|
+| **Windows** | Double-click `start.bat` | Double-click `stop.bat` |
+| **macOS** | Double-click `Start.command` | Double-click `Stop.command` |
+| **Linux** | Double-click `Start.sh` (or `bash Start.sh`) | `bash Stop.command` |
+| **Any OS** | `python start.py` | `python start.py stop` |
+
+*On macOS, if you see "cannot be opened because it is from an unidentified
+developer", right-click the file → **Open** → **Open** once.*
+
+---
+
 ### Option 1: Web GUI (Recommended)
 
 ```bash
@@ -114,6 +132,9 @@ streamlit run app.py
 ```
 
 Open **http://localhost:8501** in your browser. Enter your free Groq API key in the sidebar and upload a document.
+
+> For most users, just double-clicking `start.bat` / `Start.command` /
+> `Start.sh` is enough — no manual setup required.
 
 ### Option 2: CLI Demo
 
@@ -254,12 +275,21 @@ DocIntel/
 ├── LICENSE                     # MIT License
 ├── GUIDE.md                    # Detailed user guide
 │
+├── start.bat                   # Windows one-click launcher
+├── stop.bat                    # Windows one-click stopper
+├── Start.command               # macOS one-click launcher
+├── Stop.command                # macOS/Linux one-click stopper
+├── Start.sh                    # Linux one-click launcher
+├── start.py                    # Cross-platform launcher (python start.py)
+│
 ├── docintel/                   # Core package
 │   ├── __init__.py             # Package exports
 │   ├── graph.py                # LangGraph StateGraph pipeline
 │   ├── analysis.py             # LLM-backed analysis (classification, sentiment, QA)
 │   ├── ner.py                  # Named Entity Recognition via spaCy
-│   └── retriever.py            # TF-IDF chunking and retrieval
+│   ├── retriever.py            # TF-IDF chunking and retrieval
+│   └── tools/
+│       └── stop_server.py      # Cross-platform server stopper
 │
 ├── tests/
 │   └── test_graph.py           # Test suite (NER, retrieval, full pipeline)
