@@ -35,7 +35,7 @@ echo ""
 # ------------------------------------------------------------------
 # 2. Make sure required packages are installed
 # ------------------------------------------------------------------
-$PY -c "import streamlit, langchain_groq, langgraph, spacy, sklearn" >/dev/null 2>&1
+$PY -c "import streamlit, langchain_groq, langgraph, spacy, sklearn, sentence_transformers, faiss" >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     echo "     [2/4] OK - Required packages already installed"
 else

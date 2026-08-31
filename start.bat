@@ -56,8 +56,12 @@ echo.
 if %errorlevel%==0 (set "streamlit_ok=1") else (set "streamlit_ok=0")
 %PYTHON% -c "import langchain_groq" >nul 2>nul
 if %errorlevel%==0 (set "lg_ok=1") else (set "lg_ok=0")
+%PYTHON% -c "import sentence_transformers" >nul 2>nul
+if %errorlevel%==0 (set "st_ok=1") else (set "st_ok=0")
+%PYTHON% -c "import faiss" >nul 2>nul
+if %errorlevel%==0 (set "faiss_ok=1") else (set "faiss_ok=0")
 
-if "%streamlit_ok%"=="1" if "%lg_ok%"=="1" (
+if "%streamlit_ok%"=="1" if "%lg_ok%"=="1" if "%st_ok%"=="1" if "%faiss_ok%"=="1" (
     echo     [2/4] OK - Required packages already installed
 ) else (
     echo     [2/4] Installing required packages...
