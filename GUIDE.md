@@ -51,7 +51,7 @@ You should see:
 ```
 [PASS] NER extracted 7 real entities: [...]
 [PASS] TF-IDF retrieval returned 1 chunk(s), top score=0.229
-[PASS] Full LangGraph pipeline: classify -> extract_entities -> sentiment_topic -> build_index -> qa
+[PASS] Full LangGraph pipeline: classify -> extract_entities -> sentiment_topic -> build_index -> qa -> summarize
 All DocIntel tests passed.
 ```
 
@@ -122,7 +122,8 @@ In the **left sidebar**:
 1. Click **"How to get your free API key"** to expand the guide
 2. Paste your `gsk_...` key into the input field
    - If you already saved your key in the `start.bat` / launcher prompt, it is **already filled in** for you — just confirm it's there
-3. Optionally select a model from the dropdown:
+3. Click **"Save API Key"** to apply it
+4. Optionally select a model from the dropdown:
    - `openai/gpt-oss-120b` — Best quality (recommended)
    - `openai/gpt-oss-20b` — Fastest responses
    - `qwen/qwen3.6-27b` — Balanced speed/quality
@@ -152,9 +153,10 @@ Choose one of three methods in the sidebar:
   - **News Article** — AI regulation report
   - **Legal Contract** — A service agreement with SLA terms
 
-### Step 3: View Results
+### Step 3: Run & View Results
 
-The pipeline runs automatically. You'll see:
+Once a document is loaded, click the **"🚀 Analyze Document"** button in the main area.
+You'll see:
 
 1. **Progress indicators** — Step-by-step status as each node executes
 2. **Metrics bar** — 4 key metrics at a glance:
@@ -163,7 +165,13 @@ The pipeline runs automatically. You'll see:
    - Sentiment (e.g., "Negative")
    - Entities Found (e.g., "7")
 
-3. **5 result tabs:**
+3. **6 result tabs:**
+
+#### 📝 Summary Tab
+
+The first tab gives you the big picture at a glance:
+- **Executive Summary** — A concise overview of the whole document
+- **Key Insights** — The most important takeaways, listed as numbered highlights
 
 #### 🏷️ Classification Tab
 
@@ -204,7 +212,7 @@ Shows how the document was split into chunks for retrieval:
 
 The RAG (Retrieval-Augmented Generation) Q&A interface:
 
-1. Type a question in the input field
+1. Type a question in the input field, then click **"Ask"**
 2. The system:
    - Chunks the document
    - Finds the most relevant chunks using TF-IDF
@@ -494,14 +502,15 @@ To add a new node:
 3. Add edges to connect it to the pipeline
 
 ```python
-# Example: Add a summarization step
+# Example: Register a custom node and wire it into the pipeline
+from docintel.analysis import summarize_document
+
 def _summarize(state: DocIntelState) -> dict:
-    summary = generate_summary(state["text"])
-    return {"summary": summary}
+    return {"summary": summarize_document(state["text"])}
 
 g.add_node("summarize", _summarize)
-g.add_edge("classify", "summarize")
-g.add_edge("summarize", "extract_entities")
+g.add_edge("qa", "summarize")
+g.add_edge("summarize", END)
 ```
 
 ### Swapping Components

@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Agentic Document Intelligence Pipeline</strong><br>
-  Classify, extract entities, analyze sentiment, and ask questions about any document — powered by open-source LLMs.
+  Classify, summarize, extract entities, analyze sentiment, and ask questions about any document — powered by open-source LLMs.
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 ## Overview
 
-**DocIntel** is a free, open-source document intelligence pipeline that processes any text document through a multi-step agentic workflow. It combines LLM-powered analysis with classical NLP techniques to deliver classification, named entity recognition, sentiment analysis, topic extraction, and retrieval-augmented question answering.
+**DocIntel** is a free, open-source document intelligence pipeline that processes any text document through a multi-step agentic workflow. It combines LLM-powered analysis with classical NLP techniques to deliver executive summaries and key insights, classification, named entity recognition, sentiment analysis, topic extraction, and retrieval-augmented question answering.
 
 Built with **LangGraph** for orchestration, **Groq** (free tier with GPT-OSS) for LLM inference, **spaCy** for real NER, and **scikit-learn** for TF-IDF retrieval — everything runs without paid APIs.
 
@@ -47,6 +47,7 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with GPT-OSS) fo
 
 | Feature | How It Works | Cost |
 |---------|-------------|------|
+| **Document Summary & Insights** | Executive summary + key insights via GPT-OSS 120B | Free (Groq) |
 | **Document Classification** | Zero-shot classification via GPT-OSS 120B | Free (Groq) |
 | **Named Entity Recognition** | spaCy `en_core_web_sm` — persons, orgs, dates, money, locations | Free (local) |
 | **Sentiment Analysis** | LLM-powered polarity scoring (-1.0 to +1.0) | Free (Groq) |
@@ -71,10 +72,10 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with GPT-OSS) fo
 │  │          │   │ (GPT-OSS)  │   │ (spaCy)  │   │ (GPT-OSS) │ │
 │  └──────────┘   └────────────┘   └──────────┘   └─────┬─────┘ │
 │                                                        │       │
-│  ┌──────────┐   ┌────────────────────────────────────┐ │       │
-│  │    END   │◀──│         QA (GPT-OSS)               │◀┘       │
-│  └──────────┘   │  ← TF-IDF retrieval + cited answer │         │
-│                 └─────────────────────────────────────┘         │
+│                 ┌────────────────────────────────────┐ │       │
+│  ┌──────────┐   │  QA (GPT-OSS)  ──▶  Summarize      │◀┘       │
+│  │    END   │◀──│  RAG answer + exec summary/insights │         │
+│  └──────────┘   └─────────────────────────────────────┘         │
 │                         ▲                                       │
 │                 ┌───────┴───────┐                               │
 │                 │  Build Index  │                               │
@@ -93,6 +94,7 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with GPT-OSS) fo
 | `sentiment_topic` | `analysis.py` | GPT-OSS via Groq | Sentiment polarity + key topic extraction |
 | `build_index` | `retriever.py` | scikit-learn TF-IDF | Sentence-aware chunking + vector index |
 | `qa` | `analysis.py` | GPT-OSS via Groq | Answer questions grounded in retrieved chunks with source citations |
+| `summarize` | `analysis.py` | GPT-OSS via Groq | Executive summary + key insights extraction |
 
 ---
 
@@ -196,7 +198,7 @@ DocIntel uses [Groq](https://groq.com) for free LLM inference. No credit card re
 When you first open DocIntel, you'll see a welcome screen. In the **left sidebar**:
 
 1. Expand **"How to get your free API key"** for step-by-step instructions
-2. Paste your Groq API key into the input field
+2. Paste your Groq API key into the input field, then click **"Save API Key"**
 3. Optionally select a model:
    - **GPT-OSS 120B** (default) — best quality, slightly slower
    - **GPT-OSS 20B** — fastest responses
@@ -214,10 +216,11 @@ Choose one of three input methods:
 
 #### Step 3: View Results
 
-Once a document is loaded, the pipeline runs automatically. Results appear in:
+Once a document is loaded, click the **"🚀 Analyze Document"** button. Results appear in:
 
 - **Metrics bar** — Category, Confidence, Sentiment, Entity count at a glance
-- **5 result tabs:**
+- **6 result tabs:**
+  - 📝 **Summary** — Executive summary and key insights at a glance
   - 🏷️ **Classification** — Document category with confidence score and rationale
   - 🔍 **Entities** — Extracted entities grouped by type (PERSON, ORG, DATE, MONEY, etc.)
   - 💭 **Sentiment & Topics** — Sentiment polarity score and extracted key topics
@@ -227,7 +230,7 @@ Once a document is loaded, the pipeline runs automatically. Results appear in:
 #### Step 4: Ask Questions (RAG Q&A)
 
 1. Click the **💬 Ask Questions** tab
-2. Type a question about the document
+2. Type a question about the document and click **"Ask"**
 3. The system retrieves the most relevant document chunks and generates a grounded answer
 4. Sources are shown below the answer so you can verify accuracy
 
