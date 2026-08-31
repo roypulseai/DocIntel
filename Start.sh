@@ -88,7 +88,7 @@ if [ -z "$GROQ_API_KEY" ] && [ ! -f ".env" ]; then
     echo ""
     read -p "     Paste it here (starts with gsk_): " K
     if [ -n "$K" ]; then
-        printf 'GROQ_API_KEY=%s\nGROQ_MODEL=llama-3.3-70b-versatile\n' "$K" > .env
+        printf 'GROQ_API_KEY=%s\nGROQ_MODEL=openai/gpt-oss-120b\n' "$K" > .env
         echo ""
         echo "     Got it! Your key is saved so you won't be asked again."
     else

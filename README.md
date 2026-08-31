@@ -198,9 +198,9 @@ When you first open DocIntel, you'll see a welcome screen. In the **left sidebar
 1. Expand **"How to get your free API key"** for step-by-step instructions
 2. Paste your Groq API key into the input field
 3. Optionally select a model:
-   - **Llama 3.3 70B** (default) — best quality, slightly slower
-   - **Llama 3.1 8B** — fastest responses
-   - **Mixtral 8x7B** — good balance
+   - **GPT-OSS 120B** (default) — best quality, slightly slower
+   - **GPT-OSS 20B** — fastest responses
+   - **Qwen 3.6 27B** — good balance
 
 #### Step 2: Provide a Document
 
@@ -410,7 +410,7 @@ LLM-backed nodes are mocked for deterministic CI execution. NER, chunking, retri
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `GROQ_API_KEY` | Yes | — | Your Groq API key (starts with `gsk_`) |
-| `GROQ_MODEL` | No | `llama-3.3-70b-versatile` | Groq model to use |
+| `GROQ_MODEL` | No | `openai/gpt-oss-120b` | Groq model to use |
 
 ### `.env` File
 

@@ -122,9 +122,9 @@ In the **left sidebar**:
 1. Click **"How to get your free API key"** to expand the guide
 2. Paste your `gsk_...` key into the input field
 3. Optionally select a model from the dropdown:
-   - `llama-3.3-70b-versatile` — Best quality (recommended)
-   - `llama-3.1-8b-instant` — Fastest responses
-   - `mixtral-8x7b-32768` — Balanced speed/quality
+   - `openai/gpt-oss-120b` — Best quality (recommended)
+   - `openai/gpt-oss-20b` — Fastest responses
+   - `qwen/qwen3.6-27b` — Balanced speed/quality
 
 ### Step 2: Provide a Document
 

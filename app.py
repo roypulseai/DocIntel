@@ -118,9 +118,9 @@ with st.sidebar:
 
     model = st.selectbox(
         "Model",
-        ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"],
+        ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"],
         index=0,
-        help="70B = best quality | 8B = fastest",
+        help="120B = best quality | 20B = fastest",
     )
     os.environ["GROQ_MODEL"] = model
 

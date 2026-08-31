@@ -114,7 +114,7 @@ if "%GROQ_API_KEY%"=="" (
         set /p "APIKEY=     Paste it here (starts with gsk_): "
         if not "!APIKEY!"=="" (
             echo GROQ_API_KEY=!APIKEY!> "%~dp0.env"
-            echo GROQ_MODEL=llama-3.3-70b-versatile>> "%~dp0.env"
+            echo GROQ_MODEL=openai/gpt-oss-120b>> "%~dp0.env"
             echo.
             echo     Got it! Your key is saved so you won't be asked again.
         ) else (

@@ -15,7 +15,7 @@ from langchain_core.messages import HumanMessage
 def _get_llm(temperature: float = 0.0) -> ChatGroq:
     """Return a Groq-backed ChatGroq instance."""
     api_key = os.environ.get("GROQ_API_KEY", "")
-    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
     return ChatGroq(model=model, api_key=api_key, temperature=temperature)
 
 

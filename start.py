@@ -70,7 +70,7 @@ def ensure_env() -> None:
     key = input("  Paste your Groq API key (starts with gsk_): ").strip()
     if key:
         with open(".env", "w") as f:
-            f.write(f"GROQ_API_KEY={key}\nGROQ_MODEL=llama-3.3-70b-versatile\n")
+            f.write(f"GROQ_API_KEY={key}\nGROQ_MODEL=openai/gpt-oss-120b\n")
         print("[OK] Saved API key to .env")
 
 
