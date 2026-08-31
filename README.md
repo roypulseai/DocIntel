@@ -171,6 +171,20 @@ python run_demo.py
 
 ### Option 3: Docker
 
+**Recommended — Docker Compose** (persists your analysis history across restarts):
+
+```bash
+# 1. Put your free key in a local .env file (it is git-ignored, never committed):
+#    GROQ_API_KEY=gsk_your_key_here
+# 2. One command to build and run:
+docker compose up
+```
+
+Compose reads `GROQ_API_KEY` from your local `.env`, exposes the app on
+`http://localhost:8501`, and stores history in a named Docker volume.
+
+**Manual alternative** (no history persistence):
+
 ```bash
 docker build -t docintel .
 docker run -p 8501:8501 -e GROQ_API_KEY=gsk_your_key_here docintel
@@ -291,7 +305,10 @@ DocIntel/
 ├── app.py                      # Streamlit web GUI
 ├── run_demo.py                 # CLI demo script
 ├── requirements.txt            # Python dependencies
+├── pyproject.toml              # Package metadata + supported Python versions
 ├── Dockerfile                  # Container build configuration
+├── docker-compose.yml          # One-command Docker deployment (persists history)
+├── .dockerignore               # Files excluded from the Docker build context
 ├── .env.example                # Environment variable template
 ├── .gitignore                  # Git ignore rules
 ├── LICENSE                     # MIT License

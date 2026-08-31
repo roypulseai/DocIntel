@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+
+# Secrets / env — must NEVER enter the image
+.env
+.streamlit/secrets.toml
+
+# Runtime data (local history DB and backups)
+docintel_history.db
+docintel_history.db.bak
+*.db
+*.db.bak
+
+# VCS
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docs / tooling (not needed in the runtime image)
+README.md
+GUIDE.md
+scripts/
