@@ -57,9 +57,10 @@ def test_full_graph_orchestration(mock_llm_cls):
     classify_resp = _fake_message({"category": "Customer Complaint", "confidence": 0.94, "rationale": "Reports a billing dispute."})
     sentiment_resp = _fake_message({"sentiment": "negative", "sentiment_score": -0.4, "topics": ["billing dispute", "refund delay"]})
     qa_resp = _fake_message({"text": "The reference is TXN-88213-CH for CHF 340.00. [Chunk 0]", "sources": [0]})
+    summary_resp = _fake_message({"summary": "A customer reports a duplicate charge on their account and requests a refund.", "key_insights": ["Duplicate charge of CHF 340.00", "Refund not yet processed within 5 business days"]})
 
     mock_instance = MagicMock()
-    mock_instance.invoke.side_effect = [classify_resp, sentiment_resp, qa_resp]
+    mock_instance.invoke.side_effect = [classify_resp, sentiment_resp, qa_resp, summary_resp]
     mock_llm_cls.return_value = mock_instance
 
     os.environ.setdefault("GROQ_API_KEY", "test-key-for-mocking")
@@ -71,7 +72,9 @@ def test_full_graph_orchestration(mock_llm_cls):
     assert "chunks" in result and len(result["chunks"]) >= 1
     assert "TXN-88213-CH" in result["answer"]["text"]
     assert result["answer"]["sources"], "QA answer should cite retrieved chunk indices"
-    print("[PASS] Full LangGraph pipeline: classify -> extract_entities -> sentiment_topic -> build_index -> qa")
+    assert result["summary"]["summary"], "Pipeline should produce a summary"
+    assert len(result["summary"].get("key_insights", [])) >= 2, "Summary should extract key insights"
+    print("[PASS] Full LangGraph pipeline: classify -> extract_entities -> sentiment_topic -> build_index -> qa -> summarize")
     print(f"       Final state keys: {list(result.keys())}")
 
 

@@ -91,3 +91,22 @@ def generate_answer(text: str, question: str, chunks: list[str]) -> dict:
     )
     resp = llm.invoke([HumanMessage(content=prompt)])
     return _parse_json(resp.content)
+
+
+# ---------------------------------------------------------------------------
+# Summary & key insights
+# ---------------------------------------------------------------------------
+
+def summarize_document(text: str) -> dict:
+    """Extract an executive summary and key insights from the document."""
+    llm = _get_llm()
+    prompt = (
+        "You are an expert document analyst. Read the following document and produce "
+        "a concise executive summary plus the most important key insights.\n\n"
+        "Respond with ONLY a JSON object (no markdown fences):\n"
+        '{"summary": "<2-4 sentence overview of the whole document>", '
+        '"key_insights": ["<insight 1>", "<insight 2>", ...]}\n\n'
+        f"Document:\n{text[:6000]}"
+    )
+    resp = llm.invoke([HumanMessage(content=prompt)])
+    return _parse_json(resp.content)

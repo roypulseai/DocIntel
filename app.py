@@ -27,64 +27,208 @@ st.set_page_config(
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    .stApp { background-color: #0e1117; }
-    .block-container { padding-top: 1.5rem; }
-    div[data-testid="stSidebar"] { background-color: #161b22; }
-    h1, h2, h3 { color: #e6edf3 !important; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #161b22;
-        border-radius: 6px 6px 0 0;
-        padding: 8px 20px;
-        color: #8b949e;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root {
+        --bg: #0d1117;
+        --bg-2: #161b22;
+        --bg-3: #1c2128;
+        --border: #30363d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+        --accent-2: #1f6feb;
+        --success: #3fb950;
+        --warn: #f0883e;
+        --purple: #bc8cff;
+        --pink: #ff7b72;
     }
+
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    .stApp { background: radial-gradient(1200px 800px at 85% -10%, #1f6feb14, transparent 60%),
+                    radial-gradient(900px 700px at -10% 110%, #bc8cff0d, transparent 55%),
+                    linear-gradient(180deg, var(--bg) 0%, #0a0d12 100%); }
+
+    .block-container { padding-top: 2rem; padding-bottom: 4rem; max-width: 1150px; }
+    div[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #11161d 0%, #0d1117 100%);
+        border-right: 1px solid var(--border);
+    }
+    div[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
+
+    h1, h2, h3, h4 { color: var(--text) !important; letter-spacing: -0.01em; }
+    h1 { font-weight: 800; }
+    p, li { color: var(--text); }
+
+    /* ── Hero title ── */
+    .hero {
+        background: linear-gradient(100deg, #1f6feb22, #bc8cff1a);
+        border: 1px solid #1f6feb33;
+        border-radius: 16px;
+        padding: 22px 26px;
+        margin-bottom: 24px;
+    }
+    .hero h1 { font-size: 2.1rem; margin: 0 0 6px 0; }
+    .hero-title-grad {
+        background: linear-gradient(90deg, #58a6ff, #bc8cff, #58a6ff);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent; color: transparent;
+    }
+    .hero p { color: var(--muted); margin: 0; font-size: 1.05rem; }
+
+    /* ── Buttons ── */
+    .stButton > button, .stFormSubmitButton > button {
+        border-radius: 10px;
+        font-weight: 600;
+        border: 1px solid var(--border) !important;
+        transition: all .15s ease;
+    }
+    .stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {
+        background: linear-gradient(90deg, #1f6feb, #2f81f7);
+        border: none !important;
+        color: white;
+        box-shadow: 0 4px 14px #1f6feb33;
+    }
+    .stButton > button[kind="primary"]:hover, .stFormSubmitButton > button[kind="primary"]:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px #1f6feb55;
+    }
+
+    /* ── Metrics ── */
+    div[data-testid="stMetric"] {
+        background: linear-gradient(160deg, var(--bg-2), var(--bg-3));
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 2px 10px #00000022;
+    }
+    div[data-testid="stMetricLabel"] { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em; }
+    div[data-testid="stMetricValue"] { color: var(--text); font-weight: 700; font-size: 1.35rem; }
+
+    /* ── Tabs ── */
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; border-bottom: 1px solid var(--border); }
+    .stTabs [data-baseweb="tab"] {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 10px 10px 0 0;
+        padding: 10px 18px;
+        color: var(--muted);
+        font-weight: 600;
+        transition: all .15s ease;
+    }
+    .stTabs [data-baseweb="tab"]:hover { color: var(--text); background: var(--bg-3); }
     .stTabs [aria-selected="true"] {
-        background-color: #1f6feb !important;
+        background: var(--accent-2) !important;
+        border-color: var(--accent-2) !important;
         color: white !important;
     }
-    div[data-testid="stMetric"] {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        padding: 12px 16px;
+
+    /* ── Summary card ── */
+    .summary-card {
+        background: linear-gradient(150deg, #1f6feb18, #bc8cff12);
+        border: 1px solid #1f6feb44;
+        border-left: 5px solid var(--accent);
+        border-radius: 14px;
+        padding: 18px 22px;
+        font-size: 1.05rem;
+        line-height: 1.65;
+        color: var(--text);
+        margin-bottom: 20px;
     }
+    .insight-row {
+        display: flex; align-items: flex-start; gap: 12px;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin: 8px 0;
+    }
+    .insight-num {
+        flex-shrink: 0; width: 26px; height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1f6feb, #bc8cff);
+        color: white; font-weight: 700; font-size: 0.85rem;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Entities ── */
     .entity-badge {
         display: inline-block;
-        background-color: #1f6feb22;
+        background: #1f6feb1f;
         border: 1px solid #1f6feb;
-        border-radius: 12px;
-        padding: 2px 10px;
-        margin: 2px 4px;
+        border-radius: 100px;
+        padding: 4px 12px;
+        margin: 3px 4px;
         font-size: 0.85em;
-        color: #e6edf3;
+        color: var(--text);
     }
-    .entity-label {
-        font-weight: bold;
-        color: #58a6ff;
-        margin-right: 4px;
-    }
+    .entity-label { font-weight: 700; color: var(--accent); margin-right: 6px; }
+
+    /* ── QA ── */
     .qa-source {
-        background-color: #161b22;
-        border-left: 3px solid #1f6feb;
-        padding: 8px 12px;
-        margin: 4px 0;
-        border-radius: 0 6px 6px 0;
-        font-size: 0.9em;
-        color: #8b949e;
-    }
-    .step-box {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        padding: 10px 16px;
+        background: var(--bg-2);
+        border-left: 3px solid var(--accent-2);
+        padding: 10px 14px;
         margin: 6px 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        border-radius: 0 10px 10px 0;
+        font-size: 0.9em;
+        color: var(--muted);
     }
-    .step-done { border-left: 3px solid #3fb950; }
-    .step-running { border-left: 3px solid #f0883e; }
-    .step-pending { border-left: 3px solid #30363d; }
+    .answer-card {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+        font-size: 1.02rem;
+        line-height: 1.6;
+    }
+
+    /* ── Pipeline steps ── */
+    .step-box {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 11px 16px;
+        margin: 6px 0;
+        display: flex; align-items: center; gap: 10px;
+        font-weight: 500;
+        transition: all .2s ease;
+    }
+    .step-done { border-left: 4px solid var(--success); color: var(--text); }
+    .step-running { border-left: 4px solid var(--warn); color: var(--text); animation: pulse 1.2s ease-in-out infinite; }
+    .step-pending { border-left: 4px solid var(--border); color: var(--muted); }
+    @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:.55;} }
+
+    /* ── Topic pills ── */
+    .topic-pill {
+        display: inline-block;
+        background: #bc8cff1c;
+        border: 1px solid #bc8cff55;
+        color: var(--purple);
+        border-radius: 100px;
+        padding: 5px 14px;
+        margin: 3px 5px;
+        font-weight: 600;
+        font-size: 0.9em;
+    }
+
+    /* ── Cards / info boxes ── */
+    div[data-testid="stExpander"] {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    div[data-testid="stFileUploaderDropzone"] {
+        background: var(--bg-2);
+        border: 1px dashed var(--accent-2);
+        border-radius: 12px;
+    }
+    .stCaption, [data-testid="stCaptionContainer"] p { color: var(--muted); }
+
+    /* Sidebar headers */
+    [data-testid="stSidebar"] h2 { font-size: 1.1rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -106,15 +250,20 @@ with st.sidebar:
         """)
         st.image("https://groq.com/wp-content/uploads/2024/03/Groq-logo-v2-4x-1.png", width=120)
 
-    groq_key = st.text_input(
-        "Paste your Groq API key",
-        type="password",
-        value=os.environ.get("GROQ_API_KEY", ""),
-        placeholder="gsk_xxxxxxxxxxxxxxxx",
-        help="Get yours free at console.groq.com",
-    )
-    if groq_key:
-        os.environ["GROQ_API_KEY"] = groq_key
+    with st.form("api_key_form", clear_on_submit=False):
+        groq_key = st.text_input(
+            "Paste your Groq API key",
+            type="password",
+            value=os.environ.get("GROQ_API_KEY", ""),
+            placeholder="gsk_xxxxxxxxxxxxxxxx",
+            help="Get yours free at console.groq.com. Click 'Save API Key' to apply it.",
+        )
+        save_key = st.form_submit_button("Save API Key")
+        if save_key and groq_key:
+            os.environ["GROQ_API_KEY"] = groq_key
+            st.success("API key saved!")
+    if not groq_key and save_key:
+        st.warning("Please paste your API key before saving.")
 
     model = st.selectbox(
         "Model",
@@ -253,40 +402,59 @@ Late payments accrue interest at 1.5% per month.
 
 
 # ── Main content ────────────────────────────────────────────────────────────
-st.markdown("# 📄 DocIntel")
-st.markdown("*Agentic document intelligence — classify, extract, analyze, and ask questions about any document.*")
+st.markdown("""
+<div class="hero">
+    <h1><span class="hero-title-grad">📄 DocIntel</span></h1>
+    <p>Agentic document intelligence — summarize, classify, extract, analyze, and ask questions about any document.</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ── Empty state ─────────────────────────────────────────────────────────────
 if not groq_key:
     st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 2.2, 1])
     with col2:
         st.markdown("### 👋 Welcome to DocIntel")
+        st.markdown("Get started in **2 quick steps**:")
         st.markdown("""
-        Get started in **2 steps**:
-
-        1. **Get a free Groq API key** at [console.groq.com](https://console.groq.com) (no credit card needed)
-        2. **Paste it in the sidebar** on the left
-
-        Then upload a document or try the sample!
+        1. **Get a free Groq API key** at [console.groq.com](https://console.groq.com) — no credit card needed
+        2. **Paste it in the sidebar** on the left, then click **Save API Key**
         """)
+        st.markdown("Then upload a document or try the sample, and hit **Analyze Document**!")
         st.info("**What DocIntel does:**\n"
-                "- Classifies your document automatically\n"
-                "- Extracts named entities (people, orgs, dates, money)\n"
-                "- Analyzes sentiment and key topics\n"
-                "- Lets you ask questions about the document")
+                "- ✨ Summarizes the document & extracts key insights\n"
+                "- 🏷️ Classifies your document automatically\n"
+                "- 🔍 Extracts named entities (people, orgs, dates, money)\n"
+                "- 💭 Analyzes sentiment and key topics\n"
+                "- 💬 Lets you ask questions about the document")
     st.stop()
 
 if not document_text.strip():
     st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 2.2, 1])
     with col2:
         st.markdown("### 📁 No document loaded")
-        st.markdown("Use the **sidebar** to upload a file, paste text, or try a sample document.")
+        st.markdown("Use the **sidebar** to upload a file, paste text, or try a sample document, then click **Analyze Document**.")
     st.stop()
 
 
-# ── Run pipeline ────────────────────────────────────────────────────────────
+# ── Run pipeline (triggered by the Analyze button) ──────────────────────────
+st.markdown("---")
+col_btn, col_hint = st.columns([1, 3])
+with col_btn:
+    analyze_clicked = st.button(
+        "🚀 Analyze Document",
+        type="primary",
+        help="Run summary, classification, entities, sentiment, and indexing on the loaded document.",
+    )
+with col_hint:
+    if not analyze_clicked:
+        st.caption("Your document is loaded and ready. Click **Analyze Document** to run the full analysis.")
+
+if not analyze_clicked:
+    st.stop()
+
+
 @st.cache_data(show_spinner=False, hash_funcs={type(document_text): id})
 def run_pipeline(text: str) -> dict:
     from docintel.graph import run_docintel
@@ -294,12 +462,11 @@ def run_pipeline(text: str) -> dict:
 
 
 # Progress display
-st.markdown("---")
 progress_placeholder = st.empty()
 
 with progress_placeholder.container():
     st.markdown("#### ⚡ Running Pipeline...")
-    steps = ["Classifying document", "Extracting entities (NER)", "Analyzing sentiment & topics", "Building search index"]
+    steps = ["Classifying document", "Extracting entities (NER)", "Analyzing sentiment & topics", "Building search index", "Summarizing key insights"]
     step_containers = []
     for i, step in enumerate(steps):
         c = st.empty()
@@ -319,6 +486,7 @@ classification = result.get("classification", {})
 sentiment = result.get("sentiment_topic", {})
 entities = result.get("entities", [])
 chunks = result.get("chunks", [])
+summary = result.get("summary", {})
 
 # Top-level metrics row
 col1, col2, col3, col4 = st.columns(4)
@@ -336,15 +504,33 @@ with col4:
 st.divider()
 
 # Tabs
-tab_classify, tab_entities, tab_sentiment, tab_index, tab_qa = st.tabs(
-    ["🏷️ Classification", "🔍 Entities", "💭 Sentiment & Topics", "📚 Document Index", "💬 Ask Questions"]
+tab_summary, tab_classify, tab_entities, tab_sentiment, tab_index, tab_qa = st.tabs(
+    ["📝 Summary", "🏷️ Classification", "🔍 Entities", "💭 Sentiment & Topics", "📚 Document Index", "💬 Ask Questions"]
 )
+
+with tab_summary:
+    st.subheader("Executive Summary & Key Insights")
+    sum_text = summary.get("summary", "")
+    if sum_text:
+        st.markdown(f'<div class="summary-card">{sum_text}</div>', unsafe_allow_html=True)
+    insights = summary.get("key_insights", [])
+    if insights:
+        st.markdown("#### 🔑 Key Insights")
+        for i, ins in enumerate(insights, 1):
+            st.markdown(f'<div class="insight-row"><span class="insight-num">{i}</span>{ins}</div>', unsafe_allow_html=True)
+    if not sum_text and not insights:
+        st.info("No summary was generated for this document.")
 
 with tab_classify:
     st.subheader("Document Classification")
     col_a, col_b = st.columns([2, 1])
     with col_a:
-        st.markdown(f"**Category:** `{classification.get('category', 'N/A')}`")
+        st.markdown(
+            f'<div class="summary-card" style="border-left:5px solid var(--purple);">'
+            f'<strong>Category:</strong> {classification.get("category", "N/A")}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
         rationale = classification.get("rationale", "")
         if rationale:
             st.markdown(f"**Rationale:** {rationale}")
@@ -388,8 +574,8 @@ with tab_sentiment:
         topics = sentiment.get("topics", [])
         if topics:
             st.markdown("**Extracted Topics:**")
-            for t in topics:
-                st.markdown(f"- `{t}`")
+            pills = "".join(f'<span class="topic-pill">{t}</span>' for t in topics)
+            st.markdown(f'<div>{pills}</div>', unsafe_allow_html=True)
     with st.expander("View raw data"):
         st.json(sentiment)
 
@@ -404,13 +590,15 @@ with tab_qa:
     st.subheader("Ask Questions About This Document")
     st.caption("Type any question — the AI will search relevant parts of the document and give a grounded answer with sources.")
 
-    question = st.text_input(
-        "Your question",
-        placeholder="e.g. What is the transaction reference number?",
-        label_visibility="collapsed",
-    )
+    with st.form("qa_form"):
+        question = st.text_input(
+            "Your question",
+            placeholder="e.g. What is the transaction reference number?",
+            label_visibility="collapsed",
+        )
+        ask = st.form_submit_button("💬 Ask")
 
-    if question:
+    if question and ask:
         with st.spinner("Searching document and generating answer..."):
             from docintel.retriever import TfidfRetriever, chunk_text
             from docintel.analysis import generate_answer
@@ -425,7 +613,7 @@ with tab_qa:
         sources = qa_result.get("sources", [])
 
         st.markdown("#### Answer")
-        st.markdown(answer_text)
+        st.markdown(f'<div class="answer-card">{answer_text}</div>', unsafe_allow_html=True)
 
         if sources:
             st.markdown("#### Sources")

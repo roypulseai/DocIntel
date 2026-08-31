@@ -10,7 +10,12 @@ from typing import TypedDict
 
 from langgraph.graph import StateGraph, END
 
-from docintel.analysis import classify_document, sentiment_and_topics, generate_answer
+from docintel.analysis import (
+    classify_document,
+    sentiment_and_topics,
+    generate_answer,
+    summarize_document,
+)
 from docintel.ner import extract_entities
 from docintel.retriever import chunk_text, TfidfRetriever
 
@@ -29,6 +34,7 @@ class DocIntelState(TypedDict, total=False):
     retriever: object
     hits: list
     answer: dict
+    summary: dict
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +71,10 @@ def _qa(state: DocIntelState) -> dict:
     return {"answer": answer}
 
 
+def _summarize(state: DocIntelState) -> dict:
+    return {"summary": summarize_document(state["text"])}
+
+
 # ---------------------------------------------------------------------------
 # Graph
 # ---------------------------------------------------------------------------
@@ -77,6 +87,7 @@ def _build_graph():
     g.add_node("sentiment_topic", _sentiment_topic)
     g.add_node("build_index", _build_index)
     g.add_node("qa", _qa)
+    g.add_node("summarize", _summarize)
 
     g.set_entry_point("ingest")
     g.add_edge("ingest", "classify")
@@ -84,7 +95,8 @@ def _build_graph():
     g.add_edge("extract_entities", "sentiment_topic")
     g.add_edge("sentiment_topic", "build_index")
     g.add_edge("build_index", "qa")
-    g.add_edge("qa", END)
+    g.add_edge("qa", "summarize")
+    g.add_edge("summarize", END)
 
     return g.compile()
 
