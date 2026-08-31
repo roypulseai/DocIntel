@@ -27,10 +27,12 @@ print("\n[OK] Semantic ranking correct: complaint ranked first")
 
 # Round-trip persistence
 db_data = vs.to_db()
+import json
+json.dumps(db_data)  # must be JSON-serializable (saved to SQLite)
 restored = VectorStore.from_db(db_data)
 h2 = restored.search("uptime SLA", top_k=1)
 assert h2 and h2[0].source == "contract.txt", f"Expected contract, got {h2}"
-print("[OK] Persistence round-trip works")
+print("[OK] Persistence round-trip works (to_db is JSON-serializable)")
 
 # Merge test
 vs2 = VectorStore()

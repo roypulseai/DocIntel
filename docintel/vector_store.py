@@ -173,7 +173,8 @@ class VectorStore:
     # ------------------------------------------------------------------
 
     def to_db(self) -> dict[str, Any]:
-        """Serialize index data for storage in SQLite."""
+        """Serialize index data for storage in SQLite (JSON-safe)."""
+        import base64
         vec_bytes = (
             self._vectors.tobytes() if self._vectors is not None else None
         )
@@ -182,19 +183,21 @@ class VectorStore:
             "sources": self._sources,
             "chunk_ids": self._chunk_ids,
             "dimension": self._vectors.shape[1] if self._vectors is not None else None,
-            "vectors_b64": vec_bytes,
+            "vectors_b64": base64.b64encode(vec_bytes).decode("ascii") if vec_bytes is not None else None,
         }
 
     @classmethod
     def from_db(cls, data: dict[str, Any]) -> VectorStore:
         """Reconstruct a VectorStore from data produced by ``to_db``."""
+        import base64
         store = cls()
         store._chunks = data.get("chunks", [])
         store._sources = data.get("sources", [])
         store._chunk_ids = data.get("chunk_ids", [])
-        vec_bytes = data.get("vectors_b64")
+        vec_b64 = data.get("vectors_b64")
         dim = data.get("dimension")
-        if vec_bytes and dim:
+        if vec_b64 and dim:
+            vec_bytes = base64.b64decode(vec_b64)
             store._vectors = np.frombuffer(vec_bytes, dtype=np.float32).reshape(-1, dim)
             import faiss
             store._index = faiss.IndexFlatIP(dim)
