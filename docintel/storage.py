@@ -13,6 +13,9 @@ import threading
 import time
 from typing import Any, Optional
 
+from docintel.retriever import RetrievalHit
+from docintel.vector_store import SearchHit
+
 _DB_PATH = os.environ.get(
     "DOCINTEL_DB", os.path.join(os.path.dirname(__file__), "..", "docintel_history.db")
 )
@@ -56,6 +59,25 @@ class HistoryDB:
             except sqlite3.Error:
                 pass
 
+    def _json_safe(self, obj: Any) -> Any:
+        """Recursively convert graph-state objects into JSON-safe primitives."""
+        if isinstance(obj, dict):
+            return {k: self._json_safe(v) for k, v in obj.items() if k != "retriever"}
+        if isinstance(obj, (list, tuple)):
+            return [self._json_safe(v) for v in obj]
+        if isinstance(obj, RetrievalHit):
+            return {"text": obj.text, "score": obj.score, "index": obj.index}
+        if isinstance(obj, SearchHit):
+            return {
+                "text": obj.text,
+                "score": obj.score,
+                "index": obj.index,
+                "source": obj.source,
+            }
+        if isinstance(obj, (int, float, str, bool)) or obj is None:
+            return obj
+        return str(obj)
+
     def save_analysis(
         self,
         source_name: str,
@@ -63,6 +85,7 @@ class HistoryDB:
         result: dict[str, Any],
         vector_store_data: dict[str, Any] | None = None,
     ) -> int:
+        result = self._json_safe(result)
         summary = result.get("summary", {}).get("summary", "")
         classification = result.get("classification", {})
         category = classification.get("category", "")

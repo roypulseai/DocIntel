@@ -122,7 +122,7 @@ In the **left sidebar**:
 
 1. Click **"How to get your free API key"** to expand the guide
 2. Paste your `gsk_...` key into the input field
-   - If you already saved your key in the `start.bat` / launcher prompt, it is **already filled in** for you — just confirm it's there
+   - Your key is entered here in the app each session and is **not saved to disk**. (If you set up a `.env` file, it's pre-filled for you instead.)
 3. Click **"Save API Key"** to apply it
 4. Optionally select a model from the dropdown:
    - `openai/gpt-oss-120b` — Best quality (recommended)

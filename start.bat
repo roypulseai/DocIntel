@@ -101,40 +101,17 @@ if %errorlevel%==0 (
 echo.
 
 :: ------------------------------------------------------------------
-:: 4. Make sure we have an API key (asked once, then remembered)
+:: 4. Reminder about the API key (entered in the app, not here)
 :: ------------------------------------------------------------------
-if "%GROQ_API_KEY%"=="" (
-    if not exist "%~dp0.env" (
-        echo     [4/4] Almost there! We need your free API key.
-        echo.
-        echo     This is what makes the AI work. It's free and takes
-        echo     about 60 seconds to get:
-        echo.
-        echo       1. Open  https://console.groq.com  in your browser
-        echo       2. Click "Sign up" ^(free, no credit card^)
-        echo       3. On the left click "API Keys"
-        echo       4. Click "Create API Key", copy what appears
-        echo.
-        set /p "APIKEY=     Paste it here (starts with gsk_): "
-        if not "!APIKEY!"=="" (
-            echo GROQ_API_KEY=!APIKEY!> "%~dp0.env"
-            echo GROQ_MODEL=openai/gpt-oss-120b>> "%~dp0.env"
-            echo.
-            echo     Got it! Your key is saved so you won't be asked again.
-        ) else (
-            echo.
-            echo     No problem - you can add it later inside the app.
-        )
-    ) else (
-        echo     [4/4] OK - API key found
-    )
-) else (
-    echo     [4/4] OK - API key found
-)
+echo     [4/4] OK - API key will be entered in the app
+echo.
+echo     You'll paste your free Groq key in the app's sidebar when it
+echo     opens. It is NOT saved to disk - enter it each session.
+echo     Get a free key at  https://console.groq.com
 echo.
 
 :: ------------------------------------------------------------------
-:: Launch! (streamlit reads .env itself)
+:: Launch!
 :: ------------------------------------------------------------------
 echo   ================================================================
 echo      All ready! Starting DocIntel now...

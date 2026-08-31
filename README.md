@@ -105,8 +105,10 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with GPT-OSS) fo
 ### No technical skills needed → Double-click to run
 
 DocIntel ships with **one-click launchers** that handle everything — they check
-for Python, install all requirements, download the language model, ask for your
-free API key once, start the app, and open your browser. No commands required.
+for Python, install all requirements, download the language model, start the app,
+and open your browser. No commands required. The only thing you enter is your
+free API key — and you do that **inside the app**, in the sidebar (it's not
+saved to disk; you enter it each session).
 
 | Your OS | Start (double-click) | Stop (double-click) |
 |---------|----------------------|---------------------|
@@ -122,11 +124,11 @@ developer", right-click the file → **Open** → **Open** once.*
 
 1. A **dark window** opens showing a numbered checklist `[1/4] → [4/4]` as
    every component is checked and installed.
-2. If you don't have an API key yet, the window **explains exactly how to get
-   a free one** (60 seconds at console.groq.com) and then asks you to paste it.
-   You only do this once.
-3. When everything is ready, the window says **"DocIntel is running!"** and your
+2. When everything is ready, the window says **"DocIntel is running!"** and your
    **browser opens automatically** to the app.
+3. In the app you'll be asked for your **free API key** (60 seconds at
+   console.groq.com) in the **sidebar** — it is entered in the app, not in the
+   terminal, and isn't saved to disk.
 4. If the browser doesn't open, the window tells you to type
    **`http://localhost:8501`**.
 
@@ -423,6 +425,10 @@ LLM-backed nodes are mocked for deterministic CI execution. NER, chunking, retri
 | `GROQ_MODEL` | No | `openai/gpt-oss-120b` | Groq model to use |
 
 ### `.env` File
+
+By default you enter your API key in the app's sidebar each session. For
+advanced/automated use you can instead place the key in a `.env` file, which the
+app picks up on launch (no need to type it in the UI):
 
 ```bash
 cp .env.example .env

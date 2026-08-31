@@ -8,7 +8,6 @@ Power users who prefer running a single command can call:
 This wraps the .bat / .command / .sh logic so every platform shares
 one implementation.
 """
-import os
 import subprocess
 import sys
 import time
@@ -63,36 +62,15 @@ def ensure_spacy() -> bool:
     return True
 
 
-def ensure_env() -> None:
-    if os.environ.get("GROQ_API_KEY") or os.path.exists(".env"):
-        return
-    print("\nFirst-time setup: you need a free API key.")
-    print("It takes 60 seconds at https://console.groq.com")
-    key = input("  Paste your Groq API key (starts with gsk_): ").strip()
-    if key:
-        with open(".env", "w") as f:
-            f.write(f"GROQ_API_KEY={key}\nGROQ_MODEL=openai/gpt-oss-120b\n")
-        print("[OK] Saved API key to .env")
-
-
 def start() -> None:
+    # The Groq API key is entered in the Streamlit app (sidebar), not here.
     if not all([ensure_python(), ensure_deps(), ensure_spacy()]):
         input("Press Enter to exit...")
         sys.exit(1)
-    ensure_env()
-
-    env = dict(os.environ)
-    if os.path.exists(".env"):
-        for line in open(".env"):
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, v = line.split("=", 1)
-                env.setdefault(k, v)
 
     print("\nStarting DocIntel... opening browser in a moment. Press Ctrl+C to stop.\n")
     proc = subprocess.Popen(
         [_python(), "-m", "streamlit", "run", "app.py", "--server.port", WEB_PORT],
-        env=env,
     )
     time.sleep(4)
     webbrowser.open(URL)

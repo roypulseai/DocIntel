@@ -73,31 +73,13 @@ fi
 echo ""
 
 # ------------------------------------------------------------------
-# 4. Make sure we have an API key (asked once, then remembered)
+# 4. Reminder about the API key (entered in the app, not here)
 # ------------------------------------------------------------------
-if [ -z "$GROQ_API_KEY" ] && [ ! -f ".env" ]; then
-    echo "     [4/4] Almost there! We need your free API key."
-    echo ""
-    echo "     This is what makes the AI work. It's free and takes"
-    echo "     about 60 seconds to get:"
-    echo ""
-    echo "       1. Open  https://console.groq.com  in your browser"
-    echo "       2. Click 'Sign up' (free, no credit card)"
-    echo "       3. On the left click 'API Keys'"
-    echo "       4. Click 'Create API Key', copy what appears"
-    echo ""
-    read -p "     Paste it here (starts with gsk_): " K
-    if [ -n "$K" ]; then
-        printf 'GROQ_API_KEY=%s\nGROQ_MODEL=openai/gpt-oss-120b\n' "$K" > .env
-        echo ""
-        echo "     Got it! Your key is saved so you won't be asked again."
-    else
-        echo ""
-        echo "     No problem - you can add it later inside the app."
-    fi
-else
-    echo "     [4/4] OK - API key found"
-fi
+echo "     [4/4] OK - API key will be entered in the app"
+echo ""
+echo "     You'll paste your free Groq key in the app's sidebar when it"
+echo "     opens. It is NOT saved to disk - enter it each session."
+echo "     Get a free key at  https://console.groq.com"
 echo ""
 
 # ------------------------------------------------------------------
@@ -115,8 +97,8 @@ echo ""
 echo "     To stop the app later: press Ctrl+C in this window."
 echo ""
 
-# Launch the server in the background (reads .env automatically),
-# then open the browser a few seconds later.
+# Launch the server in the background, then open the browser a few
+# seconds later. The Groq API key is entered in the app itself.
 $PY -m streamlit run app.py --server.port 8501 &
 SERVER_PID=$!
 

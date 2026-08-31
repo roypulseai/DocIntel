@@ -656,6 +656,15 @@ if not documents:
 
 
 # ── Run pipeline (triggered by the Analyze button) ─────────────────────────
+if not os.environ.get("GROQ_API_KEY", "").strip():
+    st.markdown("---")
+    st.warning(
+        "**Add your free Groq API key first.**"
+        " Paste it in the **🔑 Groq API Key** box in the left sidebar and click **Save API Key**,"
+        " then come back and hit **Analyze Document**."
+    )
+    st.stop()
+
 st.markdown("---")
 col_btn, col_hint = st.columns([1, 3])
 with col_btn:
