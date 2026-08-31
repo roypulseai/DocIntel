@@ -112,7 +112,7 @@ free API key once, start the app, and open your browser. No commands required.
 |---------|----------------------|---------------------|
 | **Windows** | `start.bat` | `stop.bat` |
 | **macOS** | `Start.command` | `Stop.command` |
-| **Linux** | `Start.sh` (or `bash Start.sh`) | `bash Stop.command` |
+| **Linux** | `Start.sh` (or `bash Start.sh`) | `Stop.sh` (or `bash Stop.sh`) |
 | **Any OS** | `python start.py` | `python start.py stop` |
 
 *On macOS, if you see "cannot be opened because it is from an unidentified
@@ -300,6 +300,7 @@ DocIntel/
 ├── Start.command               # macOS one-click launcher
 ├── Stop.command                # macOS/Linux one-click stopper
 ├── Start.sh                    # Linux one-click launcher
+├── Stop.sh                     # Linux one-click stopper
 ├── start.py                    # Cross-platform launcher (python start.py)
 │
 ├── docintel/                   # Core package
@@ -308,11 +309,14 @@ DocIntel/
 │   ├── analysis.py             # LLM-backed analysis (classification, sentiment, QA)
 │   ├── ner.py                  # Named Entity Recognition via spaCy
 │   ├── retriever.py            # TF-IDF chunking and retrieval
+│   ├── vector_store.py         # FAISS + sentence-transformers semantic search
+│   ├── storage.py              # SQLite analysis-history persistence
 │   └── tools/
 │       └── stop_server.py      # Cross-platform server stopper
 │
 ├── tests/
-│   └── test_graph.py           # Test suite (NER, retrieval, full pipeline)
+│   ├── test_graph.py           # Full graph orchestration + NER + retrieval
+│   └── test_vector_store.py    # Semantic search + persistence round-trip
 │
 └── .github/
     └── workflows/
@@ -328,7 +332,7 @@ DocIntel/
 | **LLM** | [GPT-OSS 120B](https://github.com/openai/gpt-oss) via [Groq](https://groq.com) | Classification, sentiment, QA — free tier |
 | **Orchestration** | [LangGraph](https://github.com/langchain-ai/langgraph) | Agentic workflow with typed state |
 | **NER** | [spaCy](https://spacy.io) `en_core_web_sm` | Real named entity recognition (not LLM-simulated) |
-| **Retrieval** | [scikit-learn](https://scikit-learn.org) TF-IDF | Classical information retrieval with cosine similarity |
+| **Retrieval** | [scikit-learn](https://scikit-learn.org) TF-IDF + [FAISS](https://github.com/facebookresearch/faiss) / [sentence-transformers](https://sbert.net) | Classical + semantic retrieval, cross-document search |
 | **Web GUI** | [Streamlit](https://streamlit.io) | Interactive web interface |
 | **Integration** | [LangChain](https://github.com/langchain-ai/langchain) | LLM abstraction layer |
 
@@ -393,7 +397,7 @@ from docintel.analysis import classify_document, sentiment_and_topics, generate_
 ## Testing
 
 ```bash
-python tests/test_graph.py
+python -m pytest tests/ -q
 ```
 
 The test suite covers:
@@ -403,8 +407,9 @@ The test suite covers:
 | `test_ner_runs_for_real` | spaCy NER extracts correct entity types | No |
 | `test_chunking_and_retrieval_run_for_real` | TF-IDF chunking and cosine similarity retrieval | No |
 | `test_full_graph_orchestration` | Complete LangGraph pipeline with state passing | Yes |
+| `test_vector_store.py` | Semantic search ranking + JSON-safe persistence round-trip | No |
 
-LLM-backed nodes are mocked for deterministic CI execution. NER, chunking, retrieval, and graph orchestration run for real.
+LLM-backed nodes are mocked for deterministic CI execution. NER, chunking, retrieval, semantic search, and graph orchestration run for real.
 
 ---
 

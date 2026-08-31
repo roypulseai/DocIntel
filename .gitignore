@@ -18,6 +18,9 @@ ENV/
 # Environment variables
 .env
 
+# Runtime data
+docintel_history.db
+
 # IDE
 .vscode/
 .idea/

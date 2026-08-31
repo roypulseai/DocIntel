@@ -43,7 +43,7 @@ python -m spacy download en_core_web_sm
 ### Verify Installation
 
 ```bash
-python tests/test_graph.py
+python -m pytest tests/ -q
 ```
 
 You should see:
@@ -52,6 +52,7 @@ You should see:
 [PASS] NER extracted 7 real entities: [...]
 [PASS] TF-IDF retrieval returned 1 chunk(s), top score=0.229
 [PASS] Full LangGraph pipeline: classify -> extract_entities -> sentiment_topic -> build_index -> qa -> summarize
+[OK] Semantic search ranking + persistence round-trip
 All DocIntel tests passed.
 ```
 
@@ -105,13 +106,13 @@ Open **http://localhost:8501** in your browser.
 ├──────────┬───────────────────────────────────────────┤
 │ SIDEBAR  │ MAIN AREA                                 │
 │          │                                           │
-│ 🔑 API   │ ┌─────┬─────┬─────┬─────┬──────┐         │
-│    Key   │ │Class│Entit│Senti│Index│ Ask  │         │
-│          │ ├─────┴─────┴─────┴─────┴──────┤         │
-│ 📁 Doc   │ │                             │         │
-│  Input   │ │     Results display area     │         │
-│          │ │                             │         │
-│          │ └─────────────────────────────┘         │
+│ 🧭 Nav   │ ┌────┬────┬────┬──────┬─────┬─────┐      │
+│  New/    │ │Summ│Class│Entit│Senti │Index│ Ask │     │
+│  History │ ├────┴────┴────┴──────┴─────┴─────┤      │
+│ 🔑 API   │ │                                │      │
+│    Key   │ │     Results display area        │      │
+│ 📁 Doc   │ │                                │      │
+│  Input   │ └────────────────────────────────┘      │
 └──────────┴───────────────────────────────────────────┘
 ```
 

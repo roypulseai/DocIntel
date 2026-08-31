@@ -18,5 +18,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           python -m spacy download en_core_web_sm
-      - name: Run test suite (LLM calls mocked; NER/retrieval/graph run for real)
-        run: python tests/test_graph.py
+      - name: Run test suite (LLM calls mocked; NER/retrieval/semantic search run for real)
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: python -m pytest tests/ -q

@@ -1,11 +1,10 @@
 """
-DocIntel â€” Streamlit GUI
+DocIntel — Streamlit GUI
 Run with: streamlit run app.py
 """
 
 import os
 import sys
-import json
 import re
 
 from dotenv import load_dotenv
@@ -18,13 +17,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 st.set_page_config(
-    page_title="DocIntel â€” Document Intelligence",
-    page_icon="ðŸ“„",
+    page_title="DocIntel — Document Intelligence",
+    page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# â”€â”€ Custom CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -61,7 +60,7 @@ st.markdown("""
     h1 { font-weight: 800; }
     p, li { color: var(--text); }
 
-    /* â”€â”€ Hero title â”€â”€ */
+    /* ── Hero title ── */
     .hero {
         background: linear-gradient(100deg, #1f6feb22, #bc8cff1a);
         border: 1px solid #1f6feb33;
@@ -77,7 +76,7 @@ st.markdown("""
     }
     .hero p { color: var(--muted); margin: 0; font-size: 1.05rem; }
 
-    /* â”€â”€ Buttons â”€â”€ */
+    /* ── Buttons ── */
     .stButton > button, .stFormSubmitButton > button {
         border-radius: 10px;
         font-weight: 600;
@@ -95,7 +94,7 @@ st.markdown("""
         box-shadow: 0 6px 20px #1f6feb55;
     }
 
-    /* â”€â”€ Metrics â”€â”€ */
+    /* ── Metrics ── */
     div[data-testid="stMetric"] {
         background: linear-gradient(160deg, var(--bg-2), var(--bg-3));
         border: 1px solid var(--border);
@@ -106,7 +105,7 @@ st.markdown("""
     div[data-testid="stMetricLabel"] { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em; }
     div[data-testid="stMetricValue"] { color: var(--text); font-weight: 700; font-size: 1.35rem; }
 
-    /* â”€â”€ Tabs â”€â”€ */
+    /* ── Tabs ── */
     .stTabs [data-baseweb="tab-list"] { gap: 8px; border-bottom: 1px solid var(--border); }
     .stTabs [data-baseweb="tab"] {
         background: var(--bg-2);
@@ -124,7 +123,7 @@ st.markdown("""
         color: white !important;
     }
 
-    /* â”€â”€ Summary card â”€â”€ */
+    /* ── Summary card ── */
     .summary-card {
         background: linear-gradient(150deg, #1f6feb18, #bc8cff12);
         border: 1px solid #1f6feb44;
@@ -152,7 +151,7 @@ st.markdown("""
         display: flex; align-items: center; justify-content: center;
     }
 
-    /* â”€â”€ Entities â”€â”€ */
+    /* ── Entities ── */
     .entity-badge {
         display: inline-block;
         background: #1f6feb1f;
@@ -165,7 +164,7 @@ st.markdown("""
     }
     .entity-label { font-weight: 700; color: var(--accent); margin-right: 6px; }
 
-    /* â”€â”€ QA â”€â”€ */
+    /* ── QA ── */
     .qa-source {
         background: var(--bg-2);
         border-left: 3px solid var(--accent-2);
@@ -184,7 +183,7 @@ st.markdown("""
         line-height: 1.6;
     }
 
-    /* â”€â”€ Pipeline steps â”€â”€ */
+    /* ── Pipeline steps ── */
     .step-box {
         background: var(--bg-2);
         border: 1px solid var(--border);
@@ -200,7 +199,7 @@ st.markdown("""
     .step-pending { border-left: 4px solid var(--border); color: var(--muted); }
     @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:.55;} }
 
-    /* â”€â”€ Topic pills â”€â”€ */
+    /* ── Topic pills ── */
     .topic-pill {
         display: inline-block;
         background: #bc8cff1c;
@@ -213,7 +212,7 @@ st.markdown("""
         font-size: 0.9em;
     }
 
-    /* â”€â”€ Cards / info boxes â”€â”€ */
+    /* ── Cards / info boxes ── */
     div[data-testid="stExpander"] {
         background: var(--bg-2);
         border: 1px solid var(--border);
@@ -227,33 +226,49 @@ st.markdown("""
     }
     .stCaption, [data-testid="stCaptionContainer"] p { color: var(--muted); }
 
+    /* ── History items (sidebar-agnostic) ── */
+    .history-item {
+        display: flex; align-items: flex-start; gap: 12px;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin: 8px 0;
+    }
+    .history-icon {
+        flex-shrink: 0; font-size: 1.3rem; line-height: 1.3;
+    }
+    .history-body { flex: 1; min-width: 0; }
+    .history-title { font-weight: 700; color: var(--text); display: block; margin-bottom: 2px; }
+    .history-meta { font-size: 0.82rem; color: var(--muted); display: block; }
+
     /* Sidebar headers */
     [data-testid="stSidebar"] h2 { font-size: 1.1rem; }
 </style>
 """, unsafe_allow_html=True)
 
 
-# â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## ðŸ§­ Navigate")
+    st.markdown("## 🧭 Navigate")
     view = st.radio(
         "What would you like to do?",
-        ["ðŸ“„ New Analysis", "ðŸ•˜ History"],
+        ["📄 New Analysis", "🕘 History"],
         label_visibility="collapsed",
     )
 
     st.divider()
 
-    st.markdown("## ðŸ”‘ Groq API Key (Free)")
+    st.markdown("## 🔑 Groq API Key (Free)")
 
     # Expandable guide for getting the key
     with st.expander("How to get your free API key", expanded=not bool(os.environ.get("GROQ_API_KEY", ""))):
         st.markdown("""
-        **3 easy steps â€” takes 60 seconds:**
+        **3 easy steps — takes 60 seconds:**
 
         1. Go to **[console.groq.com](https://console.groq.com)**
         2. Sign up / Log in (free, no credit card)
-        3. Click **API Keys** â†’ **Create API Key** â†’ Copy it
+        3. Click **API Keys** → **Create API Key** → Copy it
 
         Paste your key below. It starts with `gsk_`.
         """)
@@ -284,8 +299,8 @@ with st.sidebar:
 
     st.divider()
 
-    # â”€â”€ Document Input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    st.markdown("## ðŸ“ Document Input")
+    # ── Document Input ─────────────────────────────────────────────────────
+    st.markdown("## 📁 Document Input")
 
     upload_method = st.radio(
         "How would you like to provide a document?",
@@ -297,7 +312,7 @@ with st.sidebar:
     documents = []
 
     if upload_method == "Upload a file":
-        st.markdown("Supports `.txt`, `.md`, `.csv` files â€” you can select **multiple** files")
+        st.markdown("Supports `.txt`, `.md`, `.csv` files — you can select **multiple** files")
         uploaded = st.file_uploader(
             "Choose one or more documents",
             type=["txt", "md", "csv"],
@@ -308,7 +323,7 @@ with st.sidebar:
             for u in uploaded:
                 txt = u.read().decode("utf-8", errors="replace")
                 documents.append({"name": u.name, "kind": "file", "text": txt})
-            st.success(f"Loaded {len(documents)} file(s) â€” "
+            st.success(f"Loaded {len(documents)} file(s) — "
                        + ", ".join(f"{d['name']} ({len(d['text'])} chars)" for d in documents))
 
     elif upload_method == "Paste text":
@@ -327,7 +342,7 @@ with st.sidebar:
         )
         samples = {
             "Customer Complaint": """
-CUSTOMER COMPLAINT â€” Reference #CC-2026-4471
+CUSTOMER COMPLAINT — Reference #CC-2026-4471
 
 Submitted by: Maria Fontaine, Account Holder
 Date: 24 August 2026
@@ -348,9 +363,9 @@ Regards,
 Maria Fontaine
 """,
             "News Article": """
-TECHNOLOGY REPORT â€” AI Regulation Bill Advances in Senate
+TECHNOLOGY REPORT — AI Regulation Bill Advances in Senate
 
-Washington, D.C. â€” August 28, 2026
+Washington, D.C. — August 28, 2026
 
 The U.S. Senate voted 67-33 on Wednesday to advance the Artificial
 Intelligence Accountability Act, moving closer to establishing the first
@@ -358,8 +373,8 @@ comprehensive federal framework for AI regulation.
 
 Senator Maria Chen (D-CA), the bill's lead sponsor, called it "a
 landmark moment for responsible innovation." The bill would require
-companies deploying AI systems in critical infrastructure â€” healthcare,
-finance, law enforcement â€” to conduct impact assessments and provide
+companies deploying AI systems in critical infrastructure — healthcare,
+finance, law enforcement — to conduct impact assessments and provide
 transparency reports.
 
 Tech industry groups including the Information Technology Industry
@@ -417,17 +432,17 @@ Late payments accrue interest at 1.5% per month.
     )
 
 
-# â”€â”€ Main content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Main content ────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero">
-    <h1><span class="hero-title-grad">ðŸ“„ DocIntel</span></h1>
-    <p>Agentic document intelligence â€” summarize, classify, extract, analyze, and ask questions about any document.</p>
+    <h1><span class="hero-title-grad">📄 DocIntel</span></h1>
+    <p>Agentic document intelligence — summarize, classify, extract, analyze, and ask questions about any document.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# â”€â”€ Shared rendering helper (used by both history + live analysis) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Shared rendering helper (used by both history + live analysis) ──────────
 
-def _render_doc_results(result: dict, doc_text: str, vs: VectorStore | None = None) -> None:
+def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = None) -> None:
     """Render full analysis results for a single document."""
     from docintel.analysis import generate_answer
 
@@ -453,7 +468,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: VectorStore | None = No
     st.divider()
 
     tab_summary, tab_classify, tab_entities, tab_sentiment, tab_index, tab_qa = st.tabs(
-        ["ðŸ“ Summary", "ðŸ·ï¸ Classification", "ðŸ” Entities", "ðŸ’­ Sentiment & Topics", "ðŸ“š Document Index", "ðŸ’¬ Ask Questions"]
+        ["📝 Summary", "🏷️ Classification", "🔍 Entities", "💭 Sentiment & Topics", "📚 Document Index", "💬 Ask Questions"]
     )
 
     with tab_summary:
@@ -463,7 +478,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: VectorStore | None = No
             st.markdown(f'<div class="summary-card">{sum_text}</div>', unsafe_allow_html=True)
         insights = summary.get("key_insights", [])
         if insights:
-            st.markdown("#### ðŸ”‘ Key Insights")
+            st.markdown("#### 🔑 Key Insights")
             for i, ins in enumerate(insights, 1):
                 st.markdown(f'<div class="insight-row"><span class="insight-num">{i}</span>{ins}</div>', unsafe_allow_html=True)
         if not sum_text and not insights:
@@ -534,7 +549,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: VectorStore | None = No
 
     with tab_qa:
         st.subheader("Ask Questions About This Document")
-        st.caption("Type any question â€” the AI will search relevant parts of the document and give a grounded answer with sources.")
+        st.caption("Type any question — the AI will search relevant parts of the document and give a grounded answer with sources.")
 
         with st.form(f"qa_form_{abs(hash(doc_text[:200]))}"):
             question = st.text_input(
@@ -542,7 +557,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: VectorStore | None = No
                 placeholder="e.g. What is the transaction reference number?",
                 label_visibility="collapsed",
             )
-            ask = st.form_submit_button("ðŸ’¬ Ask")
+            ask = st.form_submit_button("💬 Ask")
 
         if question and ask:
             with st.spinner("Searching document and generating answer..."):
@@ -575,14 +590,14 @@ def _render_doc_results(result: dict, doc_text: str, vs: VectorStore | None = No
                         unsafe_allow_html=True,
                     )
 
-# â”€â”€ History view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── History view ────────────────────────────────────────────────────────────
 from docintel.storage import HistoryDB
 from docintel.vector_store import VectorStore
 _history = HistoryDB()
 
-if view == "ðŸ•˜ History":
-    st.markdown("### ðŸ•˜ Analysis History")
-    st.caption("Every analysis is saved here automatically, so you can review past results anytime â€” even after restarting.")
+if view == "🕘 History":
+    st.markdown("### 🕘 Analysis History")
+    st.caption("Every analysis is saved here automatically, so you can review past results anytime — even after restarting.")
     history_items = _history.list_analyses()
 
     if not history_items:
@@ -590,63 +605,62 @@ if view == "ðŸ•˜ History":
         st.stop()
 
     import datetime as _dt
-    from collections import defaultdict as _dd
 
     for item in history_items:
         ts = _dt.datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M")
-        kind_icon = {"file": "ðŸ“„", "paste": "ðŸ“", "sample": "ðŸ§ª"}.get(item["source_kind"], "ðŸ“„")
+        kind_icon = {"file": "📄", "paste": "📝", "sample": "🧪"}.get(item["source_kind"], "📄")
         st.markdown(
             f'<div class="history-item">'
             f'<span class="history-icon">{kind_icon}</span>'
             f'<div class="history-body">'
             f'<span class="history-title">{item["source_name"]}</span>'
-            f'<span class="history-meta">{ts} Â· {item["category"] or "Unclassified"} Â· {item["entity_count"]} entities{(" Â· " + item["sentiment"].title()) if item["sentiment"] else ""}</span>'
+            f'<span class="history-meta">{ts} · {item["category"] or "Unclassified"} · {item["entity_count"]} entities{(" · " + item["sentiment"].title()) if item["sentiment"] else ""}</span>'
             f'</div></div>',
             unsafe_allow_html=True,
         )
         if item["summary"]:
-            st.caption(f'ðŸ’¡ {item["summary"][:180]}{"â€¦" if len(item["summary"]) > 180 else ""}')
-        with st.expander(f"Open â€œ{item['source_name']}â€"):
+            st.caption(f'💡 {item["summary"][:180]}{"…" if len(item["summary"]) > 180 else ""}')
+        with st.expander(f"Open “{item['source_name']}”"):
             saved = _history.get_analysis(item["id"])
             _hist_vs = VectorStore.from_db(saved["vector_store_data"]) if saved.get("vector_store_data") else None
             _render_doc_results(saved["result"], saved["result"].get("text", ""), _hist_vs)
     st.stop()
 
-# â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Empty state ──────────────────────────────────────────────────────────────
 if not groq_key:
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2.2, 1])
     with col2:
-        st.markdown("### ðŸ‘‹ Welcome to DocIntel")
+        st.markdown("### 👋 Welcome to DocIntel")
         st.markdown("Get started in **2 quick steps**:")
         st.markdown("""
-        1. **Get a free Groq API key** at [console.groq.com](https://console.groq.com) â€” no credit card needed
+        1. **Get a free Groq API key** at [console.groq.com](https://console.groq.com) — no credit card needed
         2. **Paste it in the sidebar** on the left, then click **Save API Key**
         """)
         st.markdown("Then upload a document or try the sample, and hit **Analyze Document**!")
         st.info("**What DocIntel does:**\n"
-                "- âœ¨ Summarizes the document & extracts key insights\n"
-                "- ðŸ·ï¸ Classifies your document automatically\n"
-                "- ðŸ” Extracts named entities (people, orgs, dates, money)\n"
-                "- ðŸ’­ Analyzes sentiment and key topics\n"
-                "- ðŸ’¬ Lets you ask questions about the document")
+                "- ✨ Summarizes the document & extracts key insights\n"
+                "- 🏷️ Classifies your document automatically\n"
+                "- 🔍 Extracts named entities (people, orgs, dates, money)\n"
+                "- 💭 Analyzes sentiment and key topics\n"
+                "- 💬 Lets you ask questions about the document")
     st.stop()
 
 if not documents:
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2.2, 1])
     with col2:
-        st.markdown("### ðŸ“ No document loaded")
+        st.markdown("### 📁 No document loaded")
         st.markdown("Use the **sidebar** to upload one or more files, paste text, or try a sample document, then click **Analyze Document**.")
     st.stop()
 
 
-# â”€â”€ Run pipeline (triggered by the Analyze button) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Run pipeline (triggered by the Analyze button) ─────────────────────────
 st.markdown("---")
 col_btn, col_hint = st.columns([1, 3])
 with col_btn:
     analyze_clicked = st.button(
-        "ðŸš€ Analyze Document" + ("s" if len(documents) > 1 else ""),
+        "🚀 Analyze Document" + ("s" if len(documents) > 1 else ""),
         type="primary",
         help="Run summary, classification, entities, sentiment, and indexing on the loaded document(s).",
     )
@@ -685,7 +699,7 @@ with progress_placeholder.container():
         for i, step in enumerate(steps):
             c = st.empty()
             step_containers.append(c)
-            c.markdown(f'<div class="step-box step-running">â³ {step}...</div>', unsafe_allow_html=True)
+            c.markdown(f'<div class="step-box step-running">⏳ {step}...</div>', unsafe_allow_html=True)
 
         result = run_pipeline(doc["text"])
 
@@ -713,19 +727,19 @@ progress_placeholder.empty()
 _doc_by_name = {d["name"]: d for d in documents}
 if len(results_by_doc) == 1:
     _name = next(iter(results_by_doc))
-    st.markdown(f"### ðŸ“„ {_name}")
+    st.markdown(f"### 📄 {_name}")
     _render_doc_results(results_by_doc[_name], _doc_by_name[_name]["text"], cross_doc_vs)
 else:
-    _doc_tabs = st.tabs([f"ðŸ“„ {name}" for name in results_by_doc])
+    _doc_tabs = st.tabs([f"📄 {name}" for name in results_by_doc])
     for _tab, _name in zip(_doc_tabs, results_by_doc):
         with _tab:
             _render_doc_results(results_by_doc[_name], _doc_by_name[_name]["text"], cross_doc_vs)
 
 
-# â”€â”€ Cross-Document Semantic Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Cross-Document Semantic Search ──────────────────────────────────────────
 if len(results_by_doc) > 1:
     st.divider()
-    st.markdown("### ðŸŒ Cross-Document Semantic Search")
+    st.markdown("### 🌐 Cross-Document Semantic Search")
     st.caption(
         f"Search across all {len(results_by_doc)} analyzed documents using semantic embeddings (FAISS + sentence-transformers). "
         "Results are ranked by meaning, not just keywords."
@@ -737,7 +751,7 @@ if len(results_by_doc) > 1:
             placeholder="e.g. What is the refund amount?",
             label_visibility="collapsed",
         )
-        cross_search_btn = st.form_submit_button("ðŸ” Search Across All Documents")
+        cross_search_btn = st.form_submit_button("🔍 Search Across All Documents")
 
     if cross_query and cross_search_btn:
         with st.spinner("Running semantic search across all documents..."):
@@ -746,7 +760,7 @@ if len(results_by_doc) > 1:
         if cross_hits:
             st.markdown(f"**{len(cross_hits)} results** for **\"{cross_query}\"**:")
             for i, hit in enumerate(cross_hits):
-                with st.expander(f"#{i + 1} â€” {hit.source} (score: {hit.score:.3f})"):
+                with st.expander(f"#{i + 1} — {hit.source} (score: {hit.score:.3f})"):
                     st.markdown(f'<div class="answer-card">{hit.text}</div>', unsafe_allow_html=True)
         else:
             st.info("No matching chunks found across the documents.")
