@@ -8,9 +8,14 @@ import sys
 import json
 import re
 
+from dotenv import load_dotenv
+
 import streamlit as st
 
+# Load API key / model from a local .env file if present (used by the
+# one-click launchers), without overriding any real environment variables.
 sys.path.insert(0, os.path.dirname(__file__))
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 st.set_page_config(
     page_title="DocIntel — Document Intelligence",

@@ -100,19 +100,34 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with Llama 3) fo
 
 ### No technical skills needed → Double-click to run
 
-DocIntel ships with **one-click launchers** that automatically install Python
-dependencies, download the spaCy model, prompt for your free API key, start the
-app, and open your browser — no commands required.
+DocIntel ships with **one-click launchers** that handle everything — they check
+for Python, install all requirements, download the language model, ask for your
+free API key once, start the app, and open your browser. No commands required.
 
-| Your OS | Start | Stop |
-|---------|-------|------|
-| **Windows** | Double-click `start.bat` | Double-click `stop.bat` |
-| **macOS** | Double-click `Start.command` | Double-click `Stop.command` |
-| **Linux** | Double-click `Start.sh` (or `bash Start.sh`) | `bash Stop.command` |
+| Your OS | Start (double-click) | Stop (double-click) |
+|---------|----------------------|---------------------|
+| **Windows** | `start.bat` | `stop.bat` |
+| **macOS** | `Start.command` | `Stop.command` |
+| **Linux** | `Start.sh` (or `bash Start.sh`) | `bash Stop.command` |
 | **Any OS** | `python start.py` | `python start.py stop` |
 
 *On macOS, if you see "cannot be opened because it is from an unidentified
 developer", right-click the file → **Open** → **Open** once.*
+
+### What you'll see (first run)
+
+1. A **dark window** opens showing a numbered checklist `[1/4] → [4/4]` as
+   every component is checked and installed.
+2. If you don't have an API key yet, the window **explains exactly how to get
+   a free one** (60 seconds at console.groq.com) and then asks you to paste it.
+   You only do this once.
+3. When everything is ready, the window says **"DocIntel is running!"** and your
+   **browser opens automatically** to the app.
+4. If the browser doesn't open, the window tells you to type
+   **`http://localhost:8501`**.
+
+> **Keep the dark window open** while using DocIntel. To quit, double-click the
+> `Stop` file for your OS (or just close the window).
 
 ---
 

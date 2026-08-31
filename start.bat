@@ -1,146 +1,159 @@
 @echo off
 chcp 65001 >nul
 title DocIntel Launcher
-color 0B
+color 0A
 setlocal EnableDelayedExpansion
 
+:: ┌─────────────────────────────────────────────────────────────┐
+:: │  DocIntel - Document Intelligence                           │
+:: │  One-click launcher for Windows                             │
+:: └─────────────────────────────────────────────────────────────┘
+
 echo.
-echo  ================================================
-echo   DocIntel - Document Intelligence Launcher
-echo  ================================================
+echo   ================================================================
+echo      DocIntel - Document Intelligence
+echo      Getting everything ready... please wait
+echo   ================================================================
 echo.
 
-REM -- Check for Python ------------------------------------------------
+:: ------------------------------------------------------------------
+:: 1. Find Python
+:: ------------------------------------------------------------------
+set "NEED_INSTALL=0"
+
 where python >nul 2>nul
-if %errorlevel%==0 (
-    set "PYTHON=python"
-    goto :python_found
-)
+if %errorlevel%==0 (set "PYTHON=python" & goto :py_ok)
 where py >nul 2>nul
-if %errorlevel%==0 (
-    set "PYTHON=py"
-    goto :python_found
-)
+if %errorlevel%==0 (set "PYTHON=py" & goto :py_ok)
 
-echo  [ERROR] Python is not installed or not found.
+echo     [1/4] Uh oh - Python is not installed yet.
 echo.
-echo  Follow these steps to install Python:
-echo     1. Go to https://www.python.org/downloads/
-echo     2. Download Python 3.11 or newer
-echo     3. Run the installer
-echo     4. IMPORTANT: Tick "Add Python to PATH" before installing
-echo     5. Click Install Now
+echo     Don't worry! Here's what to do (takes 2 minutes):
+echo       1. Open  https://www.python.org/downloads/
+echo       2. Click the yellow "Download" button
+echo       3. Run the downloaded file
+echo       4. IMPORTANT: tick the box "Add Python to PATH"
+echo       5. Click "Install Now", wait for it to finish
 echo.
-echo  After installing, run this file again.
+echo     Then double-click this file again. That's it!
 echo.
 pause
 exit /b 1
 
-:python_found
-echo  [OK] Python found!
+:py_ok
+for /f %%V in ('%PYTHON% -c "import sys;print(sys.version_info[0])" 2^>nul') do set "PYMAJ=%%V"
+if "%PYMAJ%"=="3" (
+    echo     [1/4] OK - Python found
+) else (
+    echo     [1/4] OK - Python found
+)
 echo.
 
-REM -- Check / install dependencies -------------------------------------
-echo  Checking components... This may take a while on first run.
+:: ------------------------------------------------------------------
+:: 2. Make sure all needed packages are installed
+:: ------------------------------------------------------------------
+%PYTHON% -c "import streamlit" >nul 2>nul
+if %errorlevel%==0 (set "streamlit_ok=1") else (set "streamlit_ok=0")
+%PYTHON% -c "import langchain_groq" >nul 2>nul
+if %errorlevel%==0 (set "lg_ok=1") else (set "lg_ok=0")
 
-call :check_module "%PYTHON%" streamlit
-if not "%ERROR%"=="0" goto :deps_missing
-
-call :check_module "%PYTHON%" langchain_groq
-if not "%ERROR%"=="0" goto :deps_missing
-
-call :check_module "%PYTHON%" docintel
-if not "%ERROR%"=="0" (
-    echo  [OK] Package files present.
-    set "ERROR=0"
-)
-
-REM -- Check spaCy model ------------------------------------------------
-echo  Checking spaCy NER model...
-%PYTHON% -c "import spacy; spacy.load('en_core_web_sm')" >nul 2>nul
-if not "%errorlevel%"=="0" (
-    echo  Downloading spaCy model (one time, ~40 MB)...
-    %PYTHON% -m spacy download en_core_web_sm
-    if not "!errorlevel!"=="0" (
-        echo  [ERROR] Failed to download the spaCy model.
+if "%streamlit_ok%"=="1" if "%lg_ok%"=="1" (
+    echo     [2/4] OK - Required packages already installed
+) else (
+    echo     [2/4] Installing required packages...
+    echo             This is only needed the first time and may take
+    echo             a few minutes. Please be patient.
+    echo.
+    %PYTHON% -m pip install --quiet -r "%~dp0requirements.txt"
+    if errorlevel 1 (
+        echo.
+        echo     Something went wrong while installing.
+        echo     Please check your internet connection and try again.
+        echo.
         pause
         exit /b 1
     )
+    echo             Done!
 )
-echo  [OK] spaCy model ready.
 echo.
 
-REM -- Check API key -----------------------------------------------------
-if not defined GROQ_API_KEY (
-    if not exist ".env" (
-        echo  First-time setup: You need a free API key.
-        echo  It takes 60 seconds: https://console.groq.com
-        echo.
-        set /p "USERKEY=  Paste your Groq API key (starts with gsk_): "
-        if "!USERKEY!"=="" (
-            echo.
-            echo  No key entered. You can enter it later in the app.
-        ) else (
-            (
-                echo GROQ_API_KEY=!USERKEY!
-                echo GROQ_MODEL=llama-3.3-70b-versatile
-            ) > "%~dp0.env"
-            echo  [OK] Saved your API key to .env
-        )
+:: ------------------------------------------------------------------
+:: 3. Make sure the language model for name detection is available
+:: ------------------------------------------------------------------
+%PYTHON% -c "import spacy; spacy.load('en_core_web_sm')" >nul 2>nul
+if %errorlevel%==0 (
+    echo     [3/4] OK - Name detection model ready
+) else (
+    echo     [3/4] Downloading name detection model ^(one time, ~40 MB^)...
+    %PYTHON% -m spacy download en_core_web_sm >nul 2>nul
+    if errorlevel 1 (
+        echo             Could not download the model. Check your
+        echo             internet connection and try again.
+        pause
+        exit /b 1
     )
+    echo             Done!
 )
-
-REM -- Launch -------------------------------------------------------------
 echo.
-echo  Starting DocIntel...
-echo  Your browser will open automatically.
-echo  To stop, run:  stop.bat  (or close this window for CLI mode)
-echo  Keep this window open while using the app.
+
+:: ------------------------------------------------------------------
+:: 4. Make sure we have an API key (asked once, then remembered)
+:: ------------------------------------------------------------------
+if "%GROQ_API_KEY%"=="" (
+    if not exist "%~dp0.env" (
+        echo     [4/4] Almost there! We need your free API key.
+        echo.
+        echo     This is what makes the AI work. It's free and takes
+        echo     about 60 seconds to get:
+        echo.
+        echo       1. Open  https://console.groq.com  in your browser
+        echo       2. Click "Sign up" ^(free, no credit card^)
+        echo       3. On the left click "API Keys"
+        echo       4. Click "Create API Key", copy what appears
+        echo.
+        set /p "APIKEY=     Paste it here (starts with gsk_): "
+        if not "!APIKEY!"=="" (
+            echo GROQ_API_KEY=!APIKEY!> "%~dp0.env"
+            echo GROQ_MODEL=llama-3.3-70b-versatile>> "%~dp0.env"
+            echo.
+            echo     Got it! Your key is saved so you won't be asked again.
+        ) else (
+            echo.
+            echo     No problem - you can add it later inside the app.
+        )
+    ) else (
+        echo     [4/4] OK - API key found
+    )
+) else (
+    echo     [4/4] OK - API key found
+)
+echo.
+
+:: ------------------------------------------------------------------
+:: Launch! (streamlit reads .env itself)
+:: ------------------------------------------------------------------
+echo   ================================================================
+echo      All ready! Starting DocIntel now...
+echo   ================================================================
+echo.
+echo     Your web browser will open automatically to the app.
+echo     If it does NOT open, type this into any browser:
+echo.
+echo           >>>  http://localhost:8501  <<<
+echo.
+echo     You will now see the app's log messages here.
+echo     To stop the app: just close this window.
 echo.
 
 cd /d "%~dp0"
-start "" "%PYTHON%" -m streamlit run app.py --server.port 8501
-if %errorlevel% neq 0 goto :deps_missing
 
-REM -- Open browser after short delay ------------------------------------
-ping -n 4 127.0.0.1 >nul
-start "" "http://localhost:8501"
+:: Give the server a few seconds to start, then open the browser
+:: automatically (in a separate helper process), while streamlit runs
+:: in the foreground of this same window.
+start "" cmd /c "timeout /t 5 /nobreak >nul & start "" http://localhost:8501"
+
+"%PYTHON%" -m streamlit run app.py --server.port 8501
 
 echo.
-echo  DocIntel is running. Close this window to stop the process.
-echo.
+echo     DocIntel has stopped.
 pause
-
-exit /b 0
-
-:check_module
-%PYTHON% -c "import %~2" >nul 2>nul
-if "%errorlevel%"=="0" (
-    set "ERROR=0"
-) else (
-    set "ERROR=1"
-)
-exit /b 0
-
-:deps_missing
-echo.
-echo  Requirements missing OR launch failed.
-echo  Installing dependencies (may take several minutes on first run)...
-echo.
-%PYTHON% -m pip install -r "%~dp0requirements.txt"
-if %errorlevel% neq 0 (
-    echo.
-    echo  [ERROR] Could not install dependencies.
-    echo  Try running manually:
-    echo    python -m pip install -r requirements.txt
-    echo    python -m spacy download en_core_web_sm
-    echo    python -m streamlit run app.py
-    echo.
-    pause
-    exit /b 1
-)
-echo  [OK] Dependencies installed.
-echo  Please run this file again to start DocIntel.
-echo.
-pause
-exit /b 0
