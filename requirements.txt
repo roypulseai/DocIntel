@@ -7,3 +7,5 @@ scikit-learn>=1.6.0
 spacy>=3.8.0
 streamlit>=1.44.0
 python-dotenv>=1.0.0
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0
