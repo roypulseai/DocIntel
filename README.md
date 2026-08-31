@@ -52,7 +52,9 @@ Built with **LangGraph** for orchestration, **Groq** (free tier with GPT-OSS) fo
 | **Named Entity Recognition** | spaCy `en_core_web_sm` — persons, orgs, dates, money, locations | Free (local) |
 | **Sentiment Analysis** | LLM-powered polarity scoring (-1.0 to +1.0) | Free (Groq) |
 | **Topic Extraction** | Automatic key topic identification | Free (Groq) |
-| **Retrieval-Augmented QA** | TF-IDF + cosine similarity retrieval → grounded answers with cited sources | Free (local + Groq) |
+| **Retrieval-Augmented QA** | Semantic search (FAISS + sentence-transformers) with TF-IDF fallback → grounded answers with cited sources | Free (local + Groq) |
+| **Cross-Document Semantic Search** | Embed all uploaded documents into one FAISS index; ask one question across all of them | Free (local) |
+| **Analysis History** | Every analysis auto-saved to SQLite; review past results (including vectors) anytime | Free (local) |
 | **Web GUI** | Streamlit interface with file upload, paste, and sample documents | Free |
 | **CLI Mode** | Run the full pipeline from command line | Free |
 | **Docker Support** | One-command containerized deployment | Free |
@@ -427,7 +429,7 @@ cp .env.example .env
 ## Roadmap
 
 - [ ] PDF and DOCX file support
-- [ ] Embedding-based retrieval (FAISS/Chroma + sentence-transformers)
+- [x] Embedding-based retrieval (FAISS + sentence-transformers) & cross-document search
 - [ ] Multi-language document support
 - [ ] Batch document processing
 - [ ] Export results as JSON/CSV/PDF

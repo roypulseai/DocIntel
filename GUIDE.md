@@ -214,11 +214,27 @@ The RAG (Retrieval-Augmented Generation) Q&A interface:
 
 1. Type a question in the input field, then click **"Ask"**
 2. The system:
-   - Chunks the document
-   - Finds the most relevant chunks using TF-IDF
+   - Finds the most relevant chunks using **semantic search (FAISS)** when embeddings are available, with TF-IDF as fallback
    - Sends them to the LLM with your question
    - Returns a grounded answer with source citations
 3. **Sources** are shown below the answer so you can verify accuracy
+
+#### 🌐 Cross-Document Semantic Search (multi-file)
+
+When you analyze **2 or more documents at once**, a dedicated search panel appears:
+
+- Type one question and search across **all** uploaded documents at once
+- Results are ranked by **meaning** (semantic embeddings), not just keywords
+- Each result shows which document and chunk it came from (source attribution)
+- Uses FAISS + sentence-transformers (`all-MiniLM-L6-v2`) — fully local, no cost
+
+#### 🕘 History
+
+Every analysis is automatically saved to a local SQLite database:
+
+- Switch to the **History** view in the sidebar to browse past analyses
+- Open any past result to re-read its summary, classification, entities, sentiment, and ask follow-up questions
+- Vector data is persisted too, so you can search historical documents semantically
 
 **Example questions:**
 
@@ -519,7 +535,7 @@ Each module is independent:
 
 - **Swap the LLM:** Change `_get_llm()` in `analysis.py` to use any LangChain-compatible LLM
 - **Swap NER:** Replace `ner.py` with a different NER system
-- **Swap retrieval:** Replace `TfidfRetriever` with FAISS, Chroma, or any vector store
+- **Swap retrieval:** The per-document Q&A uses semantic search (`VectorStore`, FAISS) with a `TfidfRetriever` fallback; both live under `docintel/` and can be extended or swapped
 
 ---
 
