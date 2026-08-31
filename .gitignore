@@ -20,6 +20,7 @@ ENV/
 
 # Runtime data
 docintel_history.db
+docintel_history.db.bak
 
 # IDE
 .vscode/
