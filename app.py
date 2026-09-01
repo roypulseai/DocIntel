@@ -6,6 +6,7 @@ Run with: streamlit run app.py
 import os
 import sys
 import re
+import html
 
 from dotenv import load_dotenv
 
@@ -22,6 +23,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# ── Per-session API key & model ─────────────────────────────────────────────
+# These live in st.session_state so each concurrent browser session has its own
+# key/model. os.environ is only ever *read* here as the initial default for
+# single-user / Docker / .env runs — never written from the sidebar.
+st.session_state.setdefault("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
+st.session_state.setdefault("GROQ_MODEL", os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b"))
 
 # ── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
@@ -262,7 +270,7 @@ with st.sidebar:
     st.markdown("## 🔑 Groq API Key (Free)")
 
     # Expandable guide for getting the key
-    with st.expander("How to get your free API key", expanded=not bool(os.environ.get("GROQ_API_KEY", ""))):
+    with st.expander("How to get your free API key", expanded=not bool(st.session_state["GROQ_API_KEY"])):
         st.markdown("""
         **3 easy steps — takes 60 seconds:**
 
@@ -278,24 +286,27 @@ with st.sidebar:
         groq_key = st.text_input(
             "Paste your Groq API key",
             type="password",
-            value=os.environ.get("GROQ_API_KEY", ""),
+            value=st.session_state["GROQ_API_KEY"],
             placeholder="gsk_xxxxxxxxxxxxxxxx",
             help="Get yours free at console.groq.com. Click 'Save API Key' to apply it.",
         )
         save_key = st.form_submit_button("Save API Key")
         if save_key and groq_key:
-            os.environ["GROQ_API_KEY"] = groq_key
+            st.session_state["GROQ_API_KEY"] = groq_key
             st.success("API key saved!")
     if not groq_key and save_key:
         st.warning("Please paste your API key before saving.")
 
+    _model_options = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"]
+    _current_model = st.session_state["GROQ_MODEL"]
+    _model_index = _model_options.index(_current_model) if _current_model in _model_options else 0
     model = st.selectbox(
         "Model",
-        ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"],
-        index=0,
+        _model_options,
+        index=_model_index,
         help="120B = best quality | 20B = fastest",
     )
-    os.environ["GROQ_MODEL"] = model
+    st.session_state["GROQ_MODEL"] = model
 
     st.divider()
 
@@ -487,12 +498,12 @@ def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = 
         st.subheader("Executive Summary & Key Insights")
         sum_text = summary.get("summary", "")
         if sum_text:
-            st.markdown(f'<div class="summary-card">{sum_text}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="summary-card">{html.escape(sum_text)}</div>', unsafe_allow_html=True)
         insights = summary.get("key_insights", [])
         if insights:
             st.markdown("#### 🔑 Key Insights")
             for i, ins in enumerate(insights, 1):
-                st.markdown(f'<div class="insight-row"><span class="insight-num">{i}</span>{ins}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="insight-row"><span class="insight-num">{i}</span>{html.escape(ins)}</div>', unsafe_allow_html=True)
         if not sum_text and not insights:
             st.info("No summary was generated for this document.")
 
@@ -502,7 +513,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = 
         with col_a:
             st.markdown(
                 f'<div class="summary-card" style="border-left:5px solid var(--purple);">'
-                f'<strong>Category:</strong> {classification.get("category", "N/A")}'
+                f'<strong>Category:</strong> {html.escape(str(classification.get("category", "N/A")))}'
                 f'</div>',
                 unsafe_allow_html=True,
             )
@@ -525,7 +536,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = 
                 for t in texts:
                     st.markdown(
                         f'<span class="entity-badge">'
-                        f'<span class="entity-label">{label}</span>{t}'
+                        f'<span class="entity-label">{html.escape(label)}</span>{html.escape(t)}'
                         f'</span>',
                         unsafe_allow_html=True,
                     )
@@ -547,7 +558,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = 
             topics = sentiment.get("topics", [])
             if topics:
                 st.markdown("**Extracted Topics:**")
-                pills = "".join(f'<span class="topic-pill">{t}</span>' for t in topics)
+                pills = "".join(f'<span class="topic-pill">{html.escape(str(t))}</span>' for t in topics)
                 st.markdown(f'<div>{pills}</div>', unsafe_allow_html=True)
         with st.expander("View raw data"):
             st.json(sentiment)
@@ -584,13 +595,15 @@ def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = 
                     _search_hits = _retriever.retrieve(question, top_k=5)
                     _chunk_texts = [h.text for h in _search_hits]
                     _qa_source = "TF-IDF"
-                qa_result = generate_answer(doc_text, question, _chunk_texts)
+                qa_result = generate_answer(question, _chunk_texts,
+                                            api_key=st.session_state.get("GROQ_API_KEY"),
+                                            model=st.session_state.get("GROQ_MODEL"))
 
             answer_text = qa_result.get("text", "No answer generated.")
             sources = qa_result.get("sources", [])
 
             st.markdown("#### Answer")
-            st.markdown(f'<div class="answer-card">{answer_text}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="answer-card">{html.escape(answer_text)}</div>', unsafe_allow_html=True)
 
             if _search_hits:
                 st.caption(f"Retrieved via {_qa_source}")
@@ -598,7 +611,7 @@ def _render_doc_results(result: dict, doc_text: str, vs: "VectorStore" | None = 
                 for h in _search_hits:
                     src_label = f"{h.source}: " if hasattr(h, "source") else ""
                     st.markdown(
-                        f'<div class="qa-source"><strong>{src_label}Chunk {h.index}:</strong> {h.text[:300]}...</div>',
+                        f'<div class="qa-source"><strong>{html.escape(str(src_label))}Chunk {h.index}:</strong> {html.escape(h.text[:300])}...</div>',
                         unsafe_allow_html=True,
                     )
 
@@ -625,8 +638,8 @@ if view == "🕘 History":
             f'<div class="history-item">'
             f'<span class="history-icon">{kind_icon}</span>'
             f'<div class="history-body">'
-            f'<span class="history-title">{item["source_name"]}</span>'
-            f'<span class="history-meta">{ts} · {item["category"] or "Unclassified"} · {item["entity_count"]} entities{(" · " + item["sentiment"].title()) if item["sentiment"] else ""}</span>'
+            f'<span class="history-title">{html.escape(str(item["source_name"]))}</span>'
+            f'<span class="history-meta">{ts} · {html.escape(str(item["category"] or "Unclassified"))} · {item["entity_count"]} entities{(" · " + html.escape(str(item["sentiment"])).title()) if item["sentiment"] else ""}</span>'
             f'</div></div>',
             unsafe_allow_html=True,
         )
@@ -639,7 +652,7 @@ if view == "🕘 History":
     st.stop()
 
 # ── Empty state ──────────────────────────────────────────────────────────────
-if not groq_key:
+if not st.session_state["GROQ_API_KEY"]:
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2.2, 1])
     with col2:
@@ -668,7 +681,7 @@ if not documents:
 
 
 # ── Run pipeline (triggered by the Analyze button) ─────────────────────────
-if not os.environ.get("GROQ_API_KEY", "").strip():
+if not st.session_state["GROQ_API_KEY"].strip():
     st.markdown("---")
     st.warning(
         "**Add your free Groq API key first.**"
@@ -691,7 +704,12 @@ with col_hint:
 
 def run_pipeline(text: str) -> dict:
     from docintel.graph import run_docintel
-    return run_docintel(text=text, question="")
+    return run_docintel(
+        text=text,
+        question="",
+        api_key=st.session_state.get("GROQ_API_KEY"),
+        model=st.session_state.get("GROQ_MODEL"),
+    )
 
 
 # ── Run the pipeline only when "Analyze Document" is clicked ────────────────
@@ -797,6 +815,6 @@ if len(results_by_doc) > 1:
             st.markdown(f"**{len(cross_hits)} results** for **\"{cross_query}\"**:")
             for i, hit in enumerate(cross_hits):
                 with st.expander(f"#{i + 1} — {hit.source} (score: {hit.score:.3f})"):
-                    st.markdown(f'<div class="answer-card">{hit.text}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="answer-card">{html.escape(hit.text)}</div>', unsafe_allow_html=True)
         else:
             st.info("No matching chunks found across the documents.")

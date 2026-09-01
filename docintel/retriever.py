@@ -48,11 +48,32 @@ class TfidfRetriever:
 
     def __init__(self, chunks: list[str]):
         self._chunks = chunks
-        self._vectorizer = TfidfVectorizer(stop_words="english")
-        self._matrix = self._vectorizer.fit_transform(chunks)
+        self._empty = False
+        try:
+            self._vectorizer = TfidfVectorizer(stop_words="english")
+            self._matrix = self._vectorizer.fit_transform(chunks)
+        except ValueError as exc:
+            # Empty vocabulary (every chunk is stop words / punctuation /
+            # numbers). Fall back to an unfiltered vectorizer so trivial /
+            # degenerate inputs can still be searched instead of crashing.
+            if "empty vocabulary" not in str(exc):
+                raise
+            import numpy as np
+            try:
+                self._vectorizer = TfidfVectorizer(stop_words=None)
+                self._matrix = self._vectorizer.fit_transform(chunks)
+            except ValueError:
+                # No tokens at all (e.g. blank/whitespace input) — nothing to
+                # match. Mark the retriever empty so retrieval returns nothing
+                # rather than raising.
+                self._empty = True
+                self._vectorizer = None
+                self._matrix = np.zeros((len(chunks), 1))
 
     def retrieve(self, query: str, top_k: int = 3) -> list[RetrievalHit]:
         """Return the *top_k* most similar chunks for *query*."""
+        if self._empty or not self._chunks:
+            return []
         query_vec = self._vectorizer.transform([query])
         scores = cosine_similarity(query_vec, self._matrix).flatten()
         ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)

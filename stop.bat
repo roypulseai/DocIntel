@@ -6,18 +6,23 @@ echo.
 echo  Stopping DocIntel...
 echo.
 
-REM -- Kill streamlit process --------------------------------------------
-taskkill /F /FI "WINDOWTITLE eq streamlit*" >nul 2>nul
-taskkill /F /IM streamlit.exe >nul 2>nul
-%SYSTEMROOT%\System32\taskkill /F /IM python.exe /FI "WINDOWTITLE eq *streamlit*" >nul 2>nul
+cd /d "%~dp0"
 
-REM -- Kill any process listening on port 8501 ----------------------------
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8501" ^| findstr "LISTENING"') do (
-    echo  Killing process %%a (Streamlit on port 8501)
-    taskkill /F /PID %%a >nul 2>nul
+where python >nul 2>nul
+if %errorlevel%==0 (
+    python docintel\tools\stop_server.py
+    goto :done
+)
+where py >nul 2>nul
+if %errorlevel%==0 (
+    py docintel\tools\stop_server.py
+    goto :done
 )
 
+echo  Could not find Python. DocIntel may not be installed.
+
+:done
 echo.
-echo  DocIntel has been stopped.
+echo  Done. If the app was open, refresh the browser tab.
 echo.
-pause >nul
+pause

@@ -44,10 +44,22 @@ def _vector_payload(text: str, source_name: str) -> dict:
     return vs.to_db()
 
 
+def _is_valid_single_doc(payload: dict | None, source_name: str) -> bool:
+    """True if *payload* is a parseable per-document store for *source_name*."""
+    if not payload:
+        return False
+    chunks = payload.get("chunks")
+    sources = payload.get("sources")
+    if not chunks or not sources:
+        return False
+    return set(sources) == {source_name}
+
+
 def migrate(db_path: str | None = None, force: bool = False) -> int:
     """Rebuild per-document vectors for every row in *db_path*.
 
-    Returns a tuple inline is not returned; instead a summary dict:
+    Idempotent: rows that already hold a valid single-document store are
+    skipped unless ``force`` is True. Returns a summary dict:
     ``{"rebuilt": int, "skipped": int, "failed": int}``.
     """
     from docintel.vector_store import VectorStore  # noqa: F401 (used via helper)
@@ -57,14 +69,16 @@ def migrate(db_path: str | None = None, force: bool = False) -> int:
     else:
         conn = sqlite3.connect(db_path)
 
-    rows = conn.execute("SELECT id, source_name, result_json FROM analyses").fetchall()
+    rows = conn.execute(
+        "SELECT id, source_name, result_json, vector_store_json FROM analyses"
+    ).fetchall()
     stats = {"rebuilt": 0, "skipped": 0, "failed": 0}
     if not rows:
         print("No analyses to migrate.")
         conn.close()
         return stats
 
-    for row_id, source_name, result_json in rows:
+    for row_id, source_name, result_json, existing_json in rows:
         try:
             result = json.loads(result_json) if result_json else {}
             text = (result or {}).get("text", "")
@@ -72,6 +86,14 @@ def migrate(db_path: str | None = None, force: bool = False) -> int:
                 print(f"  - id {row_id} ({source_name}): no text, skipped")
                 stats["skipped"] += 1
                 continue
+
+            if not force:
+                existing = json.loads(existing_json) if existing_json else None
+                if _is_valid_single_doc(existing, source_name):
+                    print(f"  = id {row_id} ({source_name}): already valid single-doc store, skipped")
+                    stats["skipped"] += 1
+                    continue
+
             payload = _vector_payload(text, source_name)
         except Exception as exc:  # noqa: BLE001
             print(f"  ! id {row_id} ({source_name}): failed -> {exc}")

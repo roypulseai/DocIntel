@@ -27,7 +27,14 @@ def _find_pids_by_port(port: str):
             ).stdout
             pids = [p for p in out.split() if p.strip()]
         except FileNotFoundError:
-            pass
+            # Fallback: use fuser
+            try:
+                out = subprocess.run(
+                    ["fuser", f"{port}/tcp"], capture_output=True, text=True
+                ).stdout
+                pids = [p for p in out.split() if p.strip()]
+            except FileNotFoundError:
+                pass
     return pids
 
 

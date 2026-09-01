@@ -136,7 +136,7 @@ Choose one of three methods in the sidebar:
 #### Upload a File
 
 - Click **"Upload a file"**
-- Browse and select a `.txt`, `.md`, or `.csv` file
+- Browse and select a `.txt`, `.md`, `.csv`, `.pdf`, `.docx`, or `.doc` file
 - The file content loads automatically
 - You'll see a success message with the filename and character count
 
@@ -355,7 +355,7 @@ sentiment = sentiment_and_topics("Your document text...")
 # RAG Question Answering
 from docintel.analysis import generate_answer
 
-answer = generate_answer(document, "What is the refund policy?", retrieved_chunks)
+answer = generate_answer("What is the refund policy?", retrieved_chunks)
 # Returns: {"text": "...", "sources": [0, 2]}
 ```
 
@@ -372,15 +372,16 @@ DocIntel works with any text document. Here are some tips for best results:
 | Plain text (.txt) | Full | Best results |
 | Markdown (.md) | Full | Markdown syntax is treated as text |
 | CSV (.csv) | Full | Read as plain text |
-| PDF | Not yet | Convert to .txt first |
-| DOCX | Not yet | Copy-paste the text content |
+| PDF (.pdf) | Full | Extracted via `pypdf` |
+| DOCX (.docx) | Full | Extracted via `python-docx` |
+| DOC (.doc) | Full | Legacy OLE documents (best-effort) |
 
 ### Tips for Better Results
 
 1. **Keep documents focused** — One topic per document works best for classification
 2. **Include context** — More text gives better sentiment/topic analysis
 3. **Clear questions** — For QA, ask specific questions rather than vague ones
-4. **Reasonable length** — Documents up to ~10,000 words work well; very long documents are truncated for LLM analysis but still fully indexed for retrieval
+4. **Reasonable length** — Documents up to ~10,000 words work well; long documents are analysed section-by-section (map-reduce summaries/classification) and fully indexed for retrieval, so nothing is silently dropped
 
 ---
 

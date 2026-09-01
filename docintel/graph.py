@@ -27,6 +27,8 @@ from docintel.retriever import chunk_text, TfidfRetriever
 class DocIntelState(TypedDict, total=False):
     text: str
     question: str
+    api_key: str | None
+    model: str | None
     classification: dict
     entities: list[dict]
     sentiment_topic: dict
@@ -46,7 +48,7 @@ def _ingest(state: DocIntelState) -> dict:
 
 
 def _classify(state: DocIntelState) -> dict:
-    return {"classification": classify_document(state["text"])}
+    return {"classification": classify_document(state["text"], state.get("api_key"), state.get("model"))}
 
 
 def _extract_entities(state: DocIntelState) -> dict:
@@ -54,7 +56,7 @@ def _extract_entities(state: DocIntelState) -> dict:
 
 
 def _sentiment_topic(state: DocIntelState) -> dict:
-    return {"sentiment_topic": sentiment_and_topics(state["text"])}
+    return {"sentiment_topic": sentiment_and_topics(state["text"], state.get("api_key"), state.get("model"))}
 
 
 def _build_index(state: DocIntelState) -> dict:
@@ -71,12 +73,12 @@ def _qa(state: DocIntelState) -> dict:
         return {"answer": {"text": "", "sources": []}}
     hits = state.get("hits", [])
     chunk_texts = [h.text if hasattr(h, "text") else h["text"] for h in hits]
-    answer = generate_answer(state["text"], question, chunk_texts)
+    answer = generate_answer(question, chunk_texts, state.get("api_key"), state.get("model"))
     return {"answer": answer}
 
 
 def _summarize(state: DocIntelState) -> dict:
-    return {"summary": summarize_document(state["text"])}
+    return {"summary": summarize_document(state["text"], state.get("api_key"), state.get("model"))}
 
 
 # ---------------------------------------------------------------------------
@@ -108,9 +110,11 @@ def _build_graph():
 _graph = _build_graph()
 
 
-def run_docintel(text: str, question: str = "") -> dict:
+def run_docintel(text: str, question: str = "", api_key: str | None = None, model: str | None = None) -> dict:
     """Execute the full pipeline and return the final state."""
-    result = _graph.invoke({"text": text, "question": question})
+    result = _graph.invoke(
+        {"text": text, "question": question, "api_key": api_key, "model": model}
+    )
     if hasattr(result, "get"):
         return result
     return dict(result)

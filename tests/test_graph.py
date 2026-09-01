@@ -52,6 +52,16 @@ def test_chunking_and_retrieval_run_for_real():
     print(f"[PASS] TF-IDF retrieval returned {len(hits)} chunk(s), top score={hits[0].score:.3f}")
 
 
+def test_retriever_handles_empty_vocabulary():
+    # All stop words => previously crashed with "empty vocabulary".
+    retriever = TfidfRetriever(["the of a", "and to in"])
+    assert len(retriever.retrieve("where")) >= 0
+    # Blank input => no tokens at all, must not raise.
+    blank = TfidfRetriever(["   ", ""])
+    assert blank.retrieve("anything") == []
+    print("[PASS] TF-IDF retriever guards against empty/degenerate vocabulary")
+
+
 @patch("docintel.analysis.ChatGroq")
 def test_full_graph_orchestration(mock_llm_cls):
     classify_resp = _fake_message({"category": "Customer Complaint", "confidence": 0.94, "rationale": "Reports a billing dispute."})

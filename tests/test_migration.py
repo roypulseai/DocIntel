@@ -75,3 +75,20 @@ def test_migration_fails_gracefully_on_missing_text():
         stats = migrate(db)
         assert stats["skipped"] == 1
         assert stats["failed"] == 0
+
+
+def test_migration_skips_existing_valid_stores_unless_force():
+    with tempfile.TemporaryDirectory() as tmp:
+        db = os.path.join(tmp, "test.db")
+        _make_db(db, [("doc.md", "md", 1.0, json.dumps({"text": "Some content."}), None)])
+        # First run rebuilds the row.
+        first = migrate(db)
+        assert first["rebuilt"] == 1 and first["skipped"] == 0
+
+        # Second run (default) must skip the now-valid single-doc store.
+        second = migrate(db)
+        assert second["rebuilt"] == 0 and second["skipped"] == 1
+
+        # Forced run must rebuild even though a store already exists.
+        forced = migrate(db, force=True)
+        assert forced["rebuilt"] == 1

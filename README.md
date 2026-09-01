@@ -228,7 +228,7 @@ Choose one of three input methods:
 
 | Method | How To | Best For |
 |--------|--------|----------|
-| **Upload a file** | Click "Upload a file" → choose a `.txt`, `.md`, or `.csv` file | Documents you already have |
+| **Upload a file** | Click "Upload a file" → choose a `.txt`, `.md`, `.csv`, `.pdf`, `.docx`, or `.doc` file | Documents you already have |
 | **Paste text** | Click "Paste text" → paste any document content | Quick analysis of snippets |
 | **Try a sample** | Click "Try a sample" → pick from 3 built-in examples | First-time exploration |
 
@@ -325,17 +325,23 @@ DocIntel/
 ├── docintel/                   # Core package
 │   ├── __init__.py             # Package exports
 │   ├── graph.py                # LangGraph StateGraph pipeline
-│   ├── analysis.py             # LLM-backed analysis (classification, sentiment, QA)
+│   ├── analysis.py             # LLM-backed analysis (classification, sentiment, summary, QA)
+│   ├── file_reader.py          # Multi-format text extraction (txt/md/csv/pdf/docx/doc)
 │   ├── ner.py                  # Named Entity Recognition via spaCy
 │   ├── retriever.py            # TF-IDF chunking and retrieval
 │   ├── vector_store.py         # FAISS + sentence-transformers semantic search
 │   ├── storage.py              # SQLite analysis-history persistence
 │   └── tools/
+│       ├── __init__.py         # Re-exports the server stopper
 │       └── stop_server.py      # Cross-platform server stopper
+│
+├── scripts/
+│   └── migrate_history_vectors.py  # Rebuild per-document vectors for old history rows
 │
 ├── tests/
 │   ├── test_graph.py           # Full graph orchestration + NER + retrieval
-│   └── test_vector_store.py    # Semantic search + persistence round-trip
+│   ├── test_vector_store.py    # Semantic search + persistence round-trip
+│   └── test_migration.py       # History vector migration
 │
 └── .github/
     └── workflows/
@@ -359,13 +365,15 @@ DocIntel/
 
 ## API Reference
 
-### `run_docintel(text, question="")`
+### `run_docintel(text, question="", api_key=None, model=None)`
 
 Execute the full pipeline. Returns a dict with all pipeline outputs.
 
 **Parameters:**
 - `text` (str): The document text to analyze
 - `question` (str, optional): A question to answer about the document
+- `api_key` (str, optional): Your Groq API key (defaults to `GROQ_API_KEY` env / `.env`)
+- `model` (str, optional): Groq model (defaults to `GROQ_MODEL` env / `openai/gpt-oss-120b`)
 
 **Returns:**
 
@@ -409,7 +417,7 @@ from docintel.analysis import classify_document, sentiment_and_topics, generate_
 | `TfidfRetriever(chunks)` | List of chunks | Retriever object with `.retrieve(query, top_k)` |
 | `classify_document(text)` | Document string | `dict` with `category`, `confidence`, `rationale` |
 | `sentiment_and_topics(text)` | Document string | `dict` with `sentiment`, `sentiment_score`, `topics` |
-| `generate_answer(text, question, chunks)` | Doc, question, chunks | `dict` with `text`, `sources` |
+| `generate_answer(question, chunks)` | Question, retrieved chunks | `dict` with `text`, `sources` |
 
 ---
 
@@ -421,14 +429,13 @@ python -m pytest tests/ -q
 
 The test suite covers:
 
-| Test | What It Validates | LLM Mocked? |
-|------|-------------------|-------------|
-| `test_ner_runs_for_real` | spaCy NER extracts correct entity types | No |
-| `test_chunking_and_retrieval_run_for_real` | TF-IDF chunking and cosine similarity retrieval | No |
-| `test_full_graph_orchestration` | Complete LangGraph pipeline with state passing | Yes |
-| `test_vector_store.py` | Semantic search ranking + JSON-safe persistence round-trip | No |
+| Test File | What It Validates | LLM Mocked? |
+|-----------|-------------------|-------------|
+| `test_graph.py` | spaCy NER, TF-IDF chunking/retrieval, empty-vocabulary guard, full LangGraph orchestration, empty-question short-circuit | Yes (LLM nodes) |
+| `test_vector_store.py` | Semantic search ranking, JSON-safe persistence round-trip, merge, per-doc sub-stores | No |
+| `test_migration.py` | History vector migration rebuilds NULL rows, skips existing valid stores, honors `--force` | No |
 
-LLM-backed nodes are mocked for deterministic CI execution. NER, chunking, retrieval, semantic search, and graph orchestration run for real.
+LLM-backed nodes are mocked for deterministic CI execution. NER, chunking, retrieval, semantic search, graph orchestration, and the vector migration all run for real.
 
 ---
 
@@ -456,10 +463,10 @@ cp .env.example .env
 
 ## Roadmap
 
-- [ ] PDF and DOCX file support
+- [x] PDF and DOCX/DOC file support
 - [x] Embedding-based retrieval (FAISS + sentence-transformers) & cross-document search
+- [x] Batch/multi-file document processing
 - [ ] Multi-language document support
-- [ ] Batch document processing
 - [ ] Export results as JSON/CSV/PDF
 - [ ] Custom classification categories
 - [ ] Conversation history for multi-turn Q&A
@@ -484,7 +491,7 @@ git clone https://github.com/roypulseai/DocIntel.git
 cd DocIntel
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
-python tests/test_graph.py  # Verify everything works
+python -m pytest tests/ -q  # Verify everything works
 ```
 
 ---

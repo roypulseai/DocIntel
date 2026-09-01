@@ -2,33 +2,30 @@
 chcp 65001 >nul
 title DocIntel Launcher
 color 0A
-setlocal EnableDelayedExpansion
-
-:: ┌─────────────────────────────────────────────────────────────┐
-:: │  DocIntel - Document Intelligence                           │
-:: │  One-click launcher for Windows                             │
-:: └─────────────────────────────────────────────────────────────┘
-
 echo.
 echo   ================================================================
 echo      DocIntel - Document Intelligence
-echo      Getting everything ready... please wait
+echo      Starting... (first run auto-installs dependencies)
 echo   ================================================================
 echo.
 
-:: ------------------------------------------------------------------
-:: 1. Find Python
-:: ------------------------------------------------------------------
-set "NEED_INSTALL=0"
+cd /d "%~dp0"
 
 where python >nul 2>nul
-if %errorlevel%==0 (set "PYTHON=python" & goto :py_ok)
+if %errorlevel%==0 (
+    python start.py
+    goto :done
+)
 where py >nul 2>nul
-if %errorlevel%==0 (set "PYTHON=py" & goto :py_ok)
+if %errorlevel%==0 (
+    py start.py
+    goto :done
+)
 
-echo     [1/4] Uh oh - Python is not installed yet.
 echo.
-echo     Don't worry! Here's what to do (takes 2 minutes):
+echo     Uh oh - Python is not installed yet.
+echo.
+echo     Here's what to do (takes 2 minutes):
 echo       1. Open  https://www.python.org/downloads/
 echo       2. Click the yellow "Download" button
 echo       3. Run the downloaded file
@@ -40,101 +37,7 @@ echo.
 pause
 exit /b 1
 
-:py_ok
-for /f %%V in ('%PYTHON% -c "import sys;print(sys.version_info[0])" 2^>nul') do set "PYMAJ=%%V"
-if "%PYMAJ%"=="3" (
-    echo     [1/4] OK - Python found
-) else (
-    echo     [1/4] OK - Python found
-)
+:done
 echo.
-
-:: ------------------------------------------------------------------
-:: 2. Make sure all needed packages are installed
-:: ------------------------------------------------------------------
-%PYTHON% -c "import streamlit" >nul 2>nul
-if %errorlevel%==0 (set "streamlit_ok=1") else (set "streamlit_ok=0")
-%PYTHON% -c "import langchain_groq" >nul 2>nul
-if %errorlevel%==0 (set "lg_ok=1") else (set "lg_ok=0")
-%PYTHON% -c "import sentence_transformers" >nul 2>nul
-if %errorlevel%==0 (set "st_ok=1") else (set "st_ok=0")
-%PYTHON% -c "import faiss" >nul 2>nul
-if %errorlevel%==0 (set "faiss_ok=1") else (set "faiss_ok=0")
-
-if "%streamlit_ok%"=="1" if "%lg_ok%"=="1" if "%st_ok%"=="1" if "%faiss_ok%"=="1" (
-    echo     [2/4] OK - Required packages already installed
-) else (
-    echo     [2/4] Installing required packages...
-    echo             This is only needed the first time and may take
-    echo             a few minutes. Please be patient.
-    echo.
-    %PYTHON% -m pip install --quiet -r "%~dp0requirements.txt"
-    if errorlevel 1 (
-        echo.
-        echo     Something went wrong while installing.
-        echo     Please check your internet connection and try again.
-        echo.
-        pause
-        exit /b 1
-    )
-    echo             Done!
-)
-echo.
-
-:: ------------------------------------------------------------------
-:: 3. Make sure the language model for name detection is available
-:: ------------------------------------------------------------------
-%PYTHON% -c "import spacy; spacy.load('en_core_web_sm')" >nul 2>nul
-if %errorlevel%==0 (
-    echo     [3/4] OK - Name detection model ready
-) else (
-    echo     [3/4] Downloading name detection model ^(one time, ~40 MB^)...
-    %PYTHON% -m spacy download en_core_web_sm >nul 2>nul
-    if errorlevel 1 (
-        echo             Could not download the model. Check your
-        echo             internet connection and try again.
-        pause
-        exit /b 1
-    )
-    echo             Done!
-)
-echo.
-
-:: ------------------------------------------------------------------
-:: 4. Reminder about the API key (entered in the app, not here)
-:: ------------------------------------------------------------------
-echo     [4/4] OK - API key will be entered in the app
-echo.
-echo     You'll paste your free Groq key in the app's sidebar when it
-echo     opens. It is NOT saved to disk - enter it each session.
-echo     Get a free key at  https://console.groq.com
-echo.
-
-:: ------------------------------------------------------------------
-:: Launch!
-:: ------------------------------------------------------------------
-echo   ================================================================
-echo      All ready! Starting DocIntel now...
-echo   ================================================================
-echo.
-echo     Your web browser will open automatically to the app.
-echo     If it does NOT open, type this into any browser:
-echo.
-echo           ^>^>^>  http://localhost:8501  ^<^<^<
-echo.
-echo     You will now see the app's log messages here.
-echo     To stop the app: just close this window.
-echo.
-
-cd /d "%~dp0"
-
-:: Give the server a few seconds to start, then open the browser
-:: automatically. We use a tiny PowerShell helper to avoid the fragile
-:: cmd quoting that caused a "> unexpected" error and aborted the launch.
-start "" powershell -NoProfile -Command "Start-Sleep -Seconds 6; Start-Process 'http://localhost:8501'"
-
-"%PYTHON%" -m streamlit run app.py --server.port 8501
-
-echo.
-echo     DocIntel has stopped.
+echo   DocIntel has stopped.
 pause
